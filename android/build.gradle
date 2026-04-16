@@ -15,6 +15,22 @@ buildscript {
         classpath("com.android.tools.build:gradle")
         classpath("com.facebook.react:react-native-gradle-plugin")
         classpath("org.jetbrains.kotlin:kotlin-gradle-plugin")
+        classpath("com.google.gms:google-services:4.4.2")
+    }
+}
+
+// Add this block here:
+allprojects {
+    repositories {
+        google()
+        mavenCentral()
+        
+        // ADD THIS SPECIFIC LINE FOR ASYNC STORAGE V3:
+        maven { 
+            url = uri("${rootProject.projectDir}/../node_modules/@react-native-async-storage/async-storage/android/local_repo") 
+        }
+
+        maven { url 'https://www.jitpack.io' }
     }
 }
 
