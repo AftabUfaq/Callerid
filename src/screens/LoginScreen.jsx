@@ -40,8 +40,8 @@ const LoginScreen = ({ navigation }) => {
         await AsyncStorage.setItem('userToken', userInfo.idToken);
         await AsyncStorage.setItem('userName', userInfo.user.name || 'User');
         
-        // Move to Permissions screen
-       navigation.replace('MainTabs');
+
+       navigation.replace('Permissions');
       } else {
         throw new Error("No user info received");
       }

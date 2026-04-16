@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, PermissionsAndroid, Platform, NativeModules, Linking } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 
 const PermissionItem = ({ icon, title, desc }) => (
@@ -13,15 +13,41 @@ const PermissionItem = ({ icon, title, desc }) => (
 );
 
 const PermissionsScreen = ({ navigation }) => {
+  const { DialerModule } = NativeModules;
   
-  const requestPermissions = async () => {
-    // 1. Trigger Native Module for Role Manager (Android)
-    // 2. Request Overlay Permission
-    // 3. Request Contact/Phone Permissions
-    
-    // For now, navigating to MainApp:
-    navigation.replace('MainApp');
-  };
+const requestPermissions = async () => {
+  try {
+    if (Platform.OS === 'android') {
+      const permissions = [
+        PermissionsAndroid.PERMISSIONS.READ_CONTACTS,
+        PermissionsAndroid.PERMISSIONS.READ_CALL_LOG,
+        PermissionsAndroid.PERMISSIONS.READ_PHONE_STATE,
+        PermissionsAndroid.PERMISSIONS.CALL_PHONE,
+      ];
+
+      const granted = await PermissionsAndroid.requestMultiple(permissions);
+
+      // Check each permission individually in the console
+      Object.keys(granted).forEach(key => {
+        console.log(`${key}: ${granted[key]}`);
+      });
+
+      // Handle the Default Dialer Role
+      if (NativeModules.DialerModule?.requestDefaultDialer) {
+        NativeModules.DialerModule.requestDefaultDialer();
+      }
+
+      // Handle Overlay Permission (The "Display over apps" one)
+      // We check if it's already granted; if not, we send them to settings.
+      // Note: This usually requires a native check, but for now, we trigger the link.
+      Linking.openSettings(); 
+    }
+
+    navigation.replace('MainTabs');
+  } catch (err) {
+    console.warn(err);
+  }
+};
 
   return (
     <View style={styles.container}>
