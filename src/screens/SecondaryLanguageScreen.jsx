@@ -1,59 +1,71 @@
-import React, { useState } from 'react';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  FlatList, 
-  TouchableOpacity, 
-  SafeAreaView 
-} from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
-const LANGUAGES = [
-  { id: '0', name: 'None / Skip', code: 'none' },
-  { id: '1', name: 'English', code: 'en' },
-  { id: '2', name: 'Spanish', code: 'es' },
-  { id: '3', name: 'Arabic', code: 'ar' },
-  { id: '4', name: 'Hindi', code: 'hi' },
-  { id: '5', name: 'Urdu', code: 'ur' },
-  { id: '6', name: 'Russian', code: 'ru' },
-];
+// 1. Define your variants mapping
+const VARIANTS = {
+  en: [
+    { id: 'en-us', name: 'English (US)', flag: '🇺🇸' },
+    { id: 'en-uk', name: 'English (UK)', flag: '🇬🇧' },
+    { id: 'en-ca', name: 'English (Canada)', flag: '🇨🇦' },
+    { id: 'en-au', name: 'English (Australia)', flag: '🇦🇺' },
+  ],
+  es: [
+    { id: 'es-es', name: 'Spanish (Spain)', flag: '🇪🇸' },
+    { id: 'es-mx', name: 'Spanish (Mexico)', flag: '🇲🇽' },
+    { id: 'es-ar', name: 'Spanish (Argentina)', flag: '🇦🇷' },
+  ],
+  ur: [
+    { id: 'ur-pk', name: 'Urdu (Pakistan)', flag: '🇵🇰' },
+    { id: 'ur-in', name: 'Urdu (India)', flag: '🇮🇳' },
+  ],
+  // Fallback / Skip option
+  default: [
+    { id: 'none', name: 'Skip / Use Default', flag: '🏳️' }
+  ]
+};
 
-const SecondaryLanguageScreen = ({ navigation }) => {
-  const [selectedLang, setSelectedLang] = useState('none');
+const SecondaryLanguageScreen = ({ navigation, route }) => {
+  // 2. Get the primary code from route params
+  const { primaryCode } = route.params || { primaryCode: 'en' };
+  
+  // 3. Select the list based on primary selection
+  const dataToShow = VARIANTS[primaryCode] || VARIANTS.default;
+  
+  const [selectedLang, setSelectedLang] = useState(dataToShow[0].id);
 
   const handleNext = async () => {
     try {
       await AsyncStorage.setItem('secondaryLanguage', selectedLang);
-      // Move to the Onboarding/Intro screens
-      navigation.navigate('Onboarding'); 
+      navigation.navigate('Login'); 
     } catch (e) {
-      console.error("Failed to save secondary language", e);
+      console.error(e);
     }
   };
 
-  const renderItem = ({ item }) => (
-    <TouchableOpacity 
-      style={[
-        styles.languageItem, 
-        selectedLang === item.code && styles.selectedItem
-      ]} 
-      onPress={() => setSelectedLang(item.code)}
-    >
-      <Text style={[
-        styles.languageText, 
-        selectedLang === item.code && styles.selectedText
-      ]}>
-        {item.name}
-      </Text>
-      {selectedLang === item.code && (
-        <Ionicons name="radio-button-on" size={22} color="#007AFF" />
-      ) || (
-        <Ionicons name="radio-button-off" size={22} color="#C7C7CC" />
-      )}
-    </TouchableOpacity>
-  );
+  const renderItem = ({ item }) => {
+    const isSelected = selectedLang === item.id;
+    return (
+      <TouchableOpacity 
+        style={[styles.languageItem, isSelected && styles.selectedItem]} 
+        onPress={() => setSelectedLang(item.id)}
+      >
+        <View style={styles.leftRow}>
+          <Text style={styles.flag}>{item.flag}</Text>
+          <Text style={[styles.languageText, isSelected && styles.selectedText]}>
+            {item.name}
+          </Text>
+        </View>
+        <Ionicons 
+            name={isSelected ? "radio-button-on" : "radio-button-off"} 
+            size={22} 
+            color={isSelected ? "#007AFF" : "#C7C7CC"} 
+        />
+      </TouchableOpacity>
+    );
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -61,27 +73,28 @@ const SecondaryLanguageScreen = ({ navigation }) => {
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
           <Ionicons name="arrow-back" size={24} color="#333" />
         </TouchableOpacity>
-        <Text style={styles.title}>Secondary Language</Text>
+        
+        {/* Step Indicator UI Update */}
+        <View style={styles.progressContainer}>
+           <View style={[styles.progressBar, { width: '100%' }]} />
+        </View>
+
+        <Text style={styles.title}>Regional Variant</Text>
         <Text style={styles.subtitle}>
-          This helps us identify caller names in other scripts or regions.
+          Optimizing CallerID for {primaryCode.toUpperCase()} regional dialects.
         </Text>
       </View>
 
       <FlatList
-        data={LANGUAGES}
+        data={dataToShow}
         renderItem={renderItem}
         keyExtractor={item => item.id}
         contentContainerStyle={styles.listPadding}
       />
 
       <View style={styles.footer}>
-        <TouchableOpacity 
-            style={[styles.button, selectedLang === 'none' && styles.skipButton]} 
-            onPress={handleNext}
-        >
-          <Text style={[styles.buttonText, selectedLang === 'none' && styles.skipText]}>
-            {selectedLang === 'none' ? 'Skip for Now' : 'Set Secondary Language'}
-          </Text>
+        <TouchableOpacity style={styles.button} onPress={handleNext}>
+          <Text style={styles.buttonText}>Finish Setup</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>
@@ -89,81 +102,35 @@ const SecondaryLanguageScreen = ({ navigation }) => {
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#F8F9FA',
-  },
-  header: {
-    padding: 20,
-  },
-  backBtn: {
-    marginBottom: 15,
-  },
-  title: {
-    fontSize: 26,
-    fontWeight: 'bold',
-    color: '#1A1A1A',
-  },
-  subtitle: {
-    fontSize: 15,
-    color: '#666',
-    marginTop: 8,
-    lineHeight: 22,
-  },
-  listPadding: {
-    paddingHorizontal: 20,
-    paddingBottom: 20,
-  },
+  container: { flex: 1, backgroundColor: '#F8F9FA' },
+  header: { padding: 25 },
+  backBtn: { marginBottom: 15 },
+  progressContainer: { height: 4, backgroundColor: '#E5E5EA', borderRadius: 2, marginBottom: 20 },
+  progressBar: { height: 4, backgroundColor: '#007AFF', borderRadius: 2 },
+  title: { fontSize: 28, fontWeight: 'bold', color: '#1A1A1A' },
+  subtitle: { fontSize: 15, color: '#666', marginTop: 8, lineHeight: 22 },
+  listPadding: { paddingHorizontal: 20 },
   languageItem: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 16,
+    padding: 18,
     backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    marginBottom: 10,
-    elevation: 1, // subtle shadow for Android
-    shadowColor: '#000', // shadow for iOS
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
+    borderRadius: 16,
+    marginBottom: 12,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOpacity: 0.05,
+    shadowRadius: 5,
   },
-  selectedItem: {
-    backgroundColor: '#F0F7FF',
-    borderColor: '#007AFF',
-    borderWidth: 1,
-  },
-  languageText: {
-    fontSize: 17,
-    color: '#333',
-  },
-  selectedText: {
-    color: '#007AFF',
-    fontWeight: '600',
-  },
-  footer: {
-    padding: 20,
-    borderTopWidth: 1,
-    borderTopColor: '#EEEEEE',
-    backgroundColor: '#FFF',
-  },
-  button: {
-    backgroundColor: '#007AFF',
-    paddingVertical: 16,
-    borderRadius: 12,
-    alignItems: 'center',
-  },
-  skipButton: {
-    backgroundColor: '#F2F2F7',
-  },
-  buttonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  skipText: {
-    color: '#3A3A3C',
-  }
+  leftRow: { flexDirection: 'row', alignItems: 'center' },
+  flag: { fontSize: 24, marginRight: 15 },
+  selectedItem: { backgroundColor: '#F0F7FF', borderColor: '#007AFF', borderWidth: 1 },
+  languageText: { fontSize: 17, color: '#333', fontWeight: '500' },
+  selectedText: { color: '#007AFF', fontWeight: '700' },
+  footer: { padding: 25, backgroundColor: '#FFF' },
+  button: { backgroundColor: '#007AFF', paddingVertical: 18, borderRadius: 16, alignItems: 'center' },
+  buttonText: { color: '#FFFFFF', fontSize: 18, fontWeight: 'bold' }
 });
 
 export default SecondaryLanguageScreen;

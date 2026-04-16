@@ -6,10 +6,11 @@ import {
   Image, 
   TouchableOpacity, 
   ScrollView, 
-  SafeAreaView 
+
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const ProfileScreen = ({ navigation }) => {
   const [userData, setUserData] = useState({ name: 'User', email: '' });

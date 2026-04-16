@@ -66,7 +66,7 @@ const LoginScreen = ({ navigation }) => {
     <View style={styles.container}>
       <View style={styles.topSection}>
         <Image 
-          source={require('../assets/kameez.jpg')} 
+          source={require('../assets/google.png')} 
           style={styles.logo} 
         />
         <Text style={styles.welcomeText}>Welcome to CallerID</Text>
@@ -84,7 +84,7 @@ const LoginScreen = ({ navigation }) => {
           ) : (
             <>
               {/* Replace with your Google icon asset if different */}
-              <Image source={require('../assets/kameez.jpg')} style={styles.googleIcon} />
+              <Image source={require('../assets/google.png')} style={styles.googleIcon} />
               <Text style={styles.googleText}>Continue with Google</Text>
             </>
           )}
