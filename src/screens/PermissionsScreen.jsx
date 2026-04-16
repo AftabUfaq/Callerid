@@ -112,11 +112,12 @@ const PermissionsScreen = ({ navigation }) => {
 
       <View style={styles.footer}>
         <TouchableOpacity style={styles.btn} onPress={requestPermissions} activeOpacity={0.8}>
-          <Text style={styles.btnText} onPress={() => navigation.replace('MainTabs')}>Grant Permissions</Text>
+          <Text style={styles.btnText}>Grant Permissions</Text>
           <Ionicons name="chevron-forward" size={20} color="#FFF" />
         </TouchableOpacity>
         <TouchableOpacity 
             style={styles.skipBtn} 
+             onPress={() => navigation.replace('MainTabs')}
             
         >
             <Text style={styles.skipText}>Set up later in Settings</Text>
