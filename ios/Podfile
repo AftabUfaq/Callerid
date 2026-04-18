@@ -32,3 +32,4 @@ target 'Callerid' do
     )
   end
 end
+pod 'RNVectorIcons', :path => '../node_modules/react-native-vector-icons'

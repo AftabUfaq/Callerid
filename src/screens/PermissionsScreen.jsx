@@ -29,52 +29,38 @@ const PermissionItem = ({ icon, title, desc }) => (
 const PermissionsScreen = ({ navigation }) => {
   const { DialerModule } = NativeModules;
 
-  const requestPermissions = async () => {
-    try {
-      if (Platform.OS === 'android') {
-        // Step 1: Standard System Permissions
-        const permissions = [
-          PermissionsAndroid.PERMISSIONS.READ_CONTACTS,
-          PermissionsAndroid.PERMISSIONS.READ_CALL_LOG,
-          PermissionsAndroid.PERMISSIONS.READ_PHONE_STATE,
-          PermissionsAndroid.PERMISSIONS.CALL_PHONE,
-        ];
-
-        const granted = await PermissionsAndroid.requestMultiple(permissions);
-        
-        // Step 2: Request Dialer Role (The System Popup)
-        if (DialerModule?.requestDefaultDialer) {
-          DialerModule.requestDefaultDialer();
-        }
-
-        // Step 3: Handle the Overlay (Display over apps)
-        // We show an Alert first so they know WHY they are going to settings
-        Alert.alert(
-          "Final Step: Overlay",
-          "To show Caller ID popups during calls, please enable 'Display over other apps' for CallerID in the next screen.",
-          [
-            { 
-              text: "Setup Now", 
-              onPress: () => {
-                Linking.openSettings(); 
-                // We don't replace screen here because they need to come back
-              } 
-            },
-            {
-              text: "I'll do it later",
-              onPress: () => navigation.replace('MainTabs'),
-              style: "cancel"
-            }
-          ]
-        );
-      } else {
-        navigation.replace('MainTabs');
+  // Inside requestPermissions function
+const requestPermissions = async () => {
+  try {
+    if (Platform.OS === 'android') {
+      // ... keep your existing Android logic here ...
+      const permissions = [
+        PermissionsAndroid.PERMISSIONS.READ_CONTACTS,
+        PermissionsAndroid.PERMISSIONS.READ_CALL_LOG,
+        PermissionsAndroid.PERMISSIONS.READ_PHONE_STATE,
+        PermissionsAndroid.PERMISSIONS.CALL_PHONE,
+      ];
+      await PermissionsAndroid.requestMultiple(permissions);
+      if (NativeModules.DialerModule?.requestDefaultDialer) {
+        NativeModules.DialerModule.requestDefaultDialer();
       }
-    } catch (err) {
-      console.warn("Permission Error:", err);
-      navigation.replace('MainTabs'); // Fallback
+      // ... etc
+    } else if (Platform.OS === 'ios') {
+      // iOS APPROACH:
+      // 1. You can only request Contacts.
+      // 2. You cannot request "Default Dialer" or "Overlay".
+      // 3. You should use a library like 'react-native-permissions' for iOS.
+      
+      Alert.alert(
+        "iOS Protection",
+        "On iOS, CallerID works via CallKit. Please enable our extension in iPhone Settings > Phone > Call Blocking & Identification after the app opens.",
+        [{ text: "Understood", onPress: () => navigation.replace('MainTabs') }]
+      );
     }
-  };
+  } catch (err) {
+    navigation.replace('MainTabs');
+  }
+};
 
   return (
     <View style={styles.container}>
