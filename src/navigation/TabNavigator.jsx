@@ -1,13 +1,13 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { View, Text, StyleSheet } from 'react-native';
-import Icon from 'react-native-vector-icons/Ionicons'; // Ensure icons are linked
-import HomeScreen from '../screens/HomeScreen';
-import CallLogsScreen from '../screens/CallLogsScreen';
+import { StyleSheet } from 'react-native';
+import Icon from 'react-native-vector-icons/Ionicons';
+
+// Import your screens
+import ContactsScreen from '../screens/ContactsScreen'; // Updated import
+import DialerScreen from '../screens/DialerScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import SettingsScreen from '../screens/SettingsScreen';
-
-
 
 const Tab = createBottomTabNavigator();
 
@@ -18,9 +18,10 @@ const TabNavigator = () => {
         tabBarIcon: ({ focused, color, size }) => {
           let iconName;
 
-          if (route.name === 'Home') {
-            iconName = focused ? 'shield-checkmark' : 'shield-checkmark-outline';
-          } else if (route.name === 'Calls') {
+          if (route.name === 'Contacts') {
+            // Updated to people icons
+            iconName = focused ? 'people' : 'people-outline';
+          } else if (route.name === 'Dialer') {
             iconName = focused ? 'call' : 'call-outline';
           } else if (route.name === 'Profile') {
             iconName = focused ? 'person' : 'person-outline';
@@ -30,21 +31,27 @@ const TabNavigator = () => {
 
           return <Icon name={iconName} size={size} color={color} />;
         },
-        tabBarActiveTintColor: '#4285F4', // Google Blue to match your login
+        tabBarActiveTintColor: '#4285F4',
         tabBarInactiveTintColor: 'gray',
         headerShown: true,
       })}
     >
-      <Tab.Screen name="Home" component={HomeScreen} options={{ title: 'Protection' }} />
-      <Tab.Screen name="Calls" component={CallLogsScreen} options={{ title: 'Call History' }} />
+      {/* Updated Screen Name and Component */}
+      <Tab.Screen
+        name="Contacts"
+        component={ContactsScreen}
+        options={{ title: 'Contacts' }}
+      />
+
+      <Tab.Screen
+        name="Dialer"
+        component={DialerScreen}
+        options={{ title: 'Keypad' }}
+      />
       <Tab.Screen name="Profile" component={ProfileScreen} />
       <Tab.Screen name="Settings" component={SettingsScreen} />
     </Tab.Navigator>
   );
 };
-
-const styles = StyleSheet.create({
-  center: { flex: 1, justifyContent: 'center', alignItems: 'center' }
-});
 
 export default TabNavigator;
