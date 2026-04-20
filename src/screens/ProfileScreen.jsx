@@ -6,7 +6,7 @@ import {
   Image, 
   TouchableOpacity, 
   ScrollView, 
-
+  StatusBar
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Ionicons from 'react-native-vector-icons/Ionicons';
@@ -18,7 +18,7 @@ const ProfileScreen = ({ navigation }) => {
   useEffect(() => {
     const loadUserData = async () => {
       const name = await AsyncStorage.getItem('userName');
-      const email = await AsyncStorage.getItem('userEmail'); // Assuming you saved this at login
+      const email = await AsyncStorage.getItem('userEmail');
       setUserData({ name: name || 'Caller User', email: email || 'user@email.com' });
     };
     loadUserData();
@@ -32,35 +32,44 @@ const ProfileScreen = ({ navigation }) => {
   const StatCard = ({ label, value, icon, color }) => (
     <View style={styles.statCard}>
       <View style={[styles.iconCircle, { backgroundColor: color + '20' }]}>
-        <Ionicons name={icon} size={24} color={color} />
+        <Ionicons name={icon} size={22} color={color} />
       </View>
       <Text style={styles.statValue}>{value}</Text>
       <Text style={styles.statLabel}>{label}</Text>
     </View>
   );
 
-  const MenuOption = ({ icon, title, subtitle, onPress, color = '#333' }) => (
+  const MenuOption = ({ icon, title, subtitle, onPress, color = '#F4F7FB' }) => (
     <TouchableOpacity style={styles.menuItem} onPress={onPress}>
       <View style={styles.menuLeft}>
-        <Ionicons name={icon} size={22} color={color} />
+        <View style={styles.menuIconBg}>
+          <Ionicons name={icon} size={20} color={color === '#F4F7FB' ? '#5EE7DF' : color} />
+        </View>
         <View style={styles.menuTextContainer}>
           <Text style={[styles.menuTitle, { color }]}>{title}</Text>
           {subtitle && <Text style={styles.menuSubtitle}>{subtitle}</Text>}
         </View>
       </View>
-      <Ionicons name="chevron-forward" size={20} color="#CCC" />
+      <Ionicons name="chevron-forward" size={18} color="#8A95A8" />
     </TouchableOpacity>
   );
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView showsVerticalScrollIndicator={false}>
+      <StatusBar barStyle="light-content" />
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 40 }}>
+        
         {/* Header Section */}
         <View style={styles.header}>
-          <Image 
-            source={{ uri: 'https://ui-avatars.com/api/?name=' + userData.name + '&background=007AFF&color=fff' }} 
-            style={styles.avatar} 
-          />
+          <View style={styles.avatarWrapper}>
+            <Image 
+              source={{ uri: `https://ui-avatars.com/api/?name=${userData.name}&background=5EE7DF&color=0F1724` }} 
+              style={styles.avatar} 
+            />
+            <TouchableOpacity style={styles.cameraBadge}>
+              <Ionicons name="camera" size={16} color="#0F1724" />
+            </TouchableOpacity>
+          </View>
           <Text style={styles.userName}>{userData.name}</Text>
           <Text style={styles.userEmail}>{userData.email}</Text>
           <TouchableOpacity style={styles.editBtn}>
@@ -70,11 +79,11 @@ const ProfileScreen = ({ navigation }) => {
 
         {/* Stats Section */}
         <View style={styles.statsContainer}>
-          <StatCard label="Spam Blocked" value="124" icon="shield-outline" color="#FF3B30" />
-          <StatCard label="Identified" value="850" icon="checkmark-done-outline" color="#34C759" />
+          <StatCard label="Spam Blocked" value="124" icon="shield-outline" color="#F26D6D" />
+          <StatCard label="Identified" value="850" icon="checkmark-done-outline" color="#5EE7DF" />
         </View>
 
-        {/* Settings Menu */}
+        {/* Preferences Menu */}
         <View style={styles.menuSection}>
           <Text style={styles.sectionTitle}>Preferences</Text>
           <MenuOption 
@@ -95,6 +104,7 @@ const ProfileScreen = ({ navigation }) => {
           />
         </View>
 
+        {/* Account Menu */}
         <View style={styles.menuSection}>
           <Text style={styles.sectionTitle}>Account</Text>
           <MenuOption 
@@ -105,7 +115,7 @@ const ProfileScreen = ({ navigation }) => {
           <MenuOption 
             icon="log-out-outline" 
             title="Logout" 
-            color="#FF3B30" 
+            color="#F26D6D" 
             onPress={handleLogout} 
           />
         </View>
@@ -117,26 +127,31 @@ const ProfileScreen = ({ navigation }) => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F8F9FA' },
-  header: { alignItems: 'center', padding: 30, backgroundColor: '#FFF' },
-  avatar: { width: 100, height: 100, borderRadius: 50, marginBottom: 15 },
-  userName: { fontSize: 22, fontWeight: 'bold', color: '#1A1A1A' },
-  userEmail: { fontSize: 14, color: '#666', marginTop: 4 },
-  editBtn: { marginTop: 15, paddingHorizontal: 20, paddingVertical: 8, borderRadius: 20, borderWidth: 1, borderColor: '#007AFF' },
-  editBtnText: { color: '#007AFF', fontWeight: '600' },
-  statsContainer: { flexDirection: 'row', padding: 20, justifyContent: 'space-between' },
-  statCard: { backgroundColor: '#FFF', width: '47%', padding: 20, borderRadius: 16, alignItems: 'center', elevation: 2, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 10 },
-  iconCircle: { padding: 10, borderRadius: 20, marginBottom: 10 },
-  statValue: { fontSize: 20, fontWeight: 'bold', color: '#1A1A1A' },
-  statLabel: { fontSize: 12, color: '#666', marginTop: 2 },
-  menuSection: { backgroundColor: '#FFF', marginTop: 20, paddingHorizontal: 20, paddingVertical: 10 },
-  sectionTitle: { fontSize: 14, fontWeight: 'bold', color: '#999', marginBottom: 10, textTransform: 'uppercase', letterSpacing: 1 },
-  menuItem: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 15, borderBottomWidth: 1, borderBottomColor: '#F0F0F0' },
+  container: { flex: 1, backgroundColor: '#0F1724' },
+  header: { alignItems: 'center', paddingVertical: 30, backgroundColor: '#1A2233', borderBottomLeftRadius: 30, borderBottomRightRadius: 30 },
+  avatarWrapper: { position: 'relative', marginBottom: 15 },
+  avatar: { width: 100, height: 100, borderRadius: 50, borderWidth: 3, borderColor: '#5EE7DF' },
+  cameraBadge: { position: 'absolute', bottom: 0, right: 0, backgroundColor: '#5EE7DF', width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center', borderWidth: 3, borderColor: '#1A2233' },
+  userName: { fontSize: 22, fontWeight: '800', color: '#F4F7FB' },
+  userEmail: { fontSize: 14, color: '#8A95A8', marginTop: 4 },
+  editBtn: { marginTop: 18, paddingHorizontal: 24, paddingVertical: 10, borderRadius: 12, backgroundColor: 'rgba(94,231,223,0.1)', borderWidth: 1, borderColor: 'rgba(94,231,223,0.3)' },
+  editBtnText: { color: '#5EE7DF', fontWeight: '700', fontSize: 13 },
+  
+  statsContainer: { flexDirection: 'row', padding: 20, justifyContent: 'space-between', marginTop: 10 },
+  statCard: { backgroundColor: '#1A2233', width: '47%', padding: 20, borderRadius: 20, alignItems: 'center', borderWidth: 1, borderColor: 'rgba(80,95,120,0.2)' },
+  iconCircle: { padding: 12, borderRadius: 18, marginBottom: 12 },
+  statValue: { fontSize: 22, fontWeight: '800', color: '#F4F7FB' },
+  statLabel: { fontSize: 12, color: '#8A95A8', marginTop: 4, textTransform: 'uppercase', letterSpacing: 0.5 },
+  
+  menuSection: { marginTop: 25, paddingHorizontal: 20 },
+  sectionTitle: { fontSize: 12, fontWeight: '700', color: '#8A95A8', marginBottom: 12, textTransform: 'uppercase', letterSpacing: 1.5 },
+  menuItem: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 16, backgroundColor: '#1A2233', borderRadius: 16, marginBottom: 10, borderWidth: 1, borderColor: 'rgba(80,95,120,0.1)' },
   menuLeft: { flexDirection: 'row', alignItems: 'center' },
+  menuIconBg: { width: 36, height: 36, borderRadius: 10, backgroundColor: 'rgba(255,255,255,0.03)', alignItems: 'center', justifyContent: 'center' },
   menuTextContainer: { marginLeft: 15 },
-  menuTitle: { fontSize: 16, fontWeight: '500' },
-  menuSubtitle: { fontSize: 12, color: '#999', marginTop: 2 },
-  versionText: { textAlign: 'center', color: '#CCC', marginVertical: 30, fontSize: 12 }
+  menuTitle: { fontSize: 16, fontWeight: '600' },
+  menuSubtitle: { fontSize: 12, color: '#8A95A8', marginTop: 2 },
+  versionText: { textAlign: 'center', color: '#8A95A8', opacity: 0.5, marginTop: 30, fontSize: 12, letterSpacing: 1 }
 });
 
 export default ProfileScreen;

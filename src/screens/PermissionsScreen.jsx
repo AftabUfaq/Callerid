@@ -8,16 +8,16 @@ import {
   PermissionsAndroid, 
   Platform, 
   NativeModules, 
-  Linking, 
-  Alert, // Added missing import
+  Alert, 
   StatusBar 
 } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const PermissionItem = ({ icon, title, desc }) => (
   <View style={styles.pItem}>
     <View style={styles.iconContainer}>
-      <Ionicons name={icon} size={26} color="#007AFF" />
+      <Ionicons name={icon} size={24} color="#5EE7DF" />
     </View>
     <View style={{ flex: 1 }}>
       <Text style={styles.pTitle}>{title}</Text>
@@ -27,53 +27,49 @@ const PermissionItem = ({ icon, title, desc }) => (
 );
 
 const PermissionsScreen = ({ navigation }) => {
-  const { DialerModule } = NativeModules;
-
-  // Inside requestPermissions function
-const requestPermissions = async () => {
-  try {
-    if (Platform.OS === 'android') {
-      // ... keep your existing Android logic here ...
-      const permissions = [
-        PermissionsAndroid.PERMISSIONS.READ_CONTACTS,
-        PermissionsAndroid.PERMISSIONS.READ_CALL_LOG,
-        PermissionsAndroid.PERMISSIONS.READ_PHONE_STATE,
-        PermissionsAndroid.PERMISSIONS.CALL_PHONE,
-      ];
-      await PermissionsAndroid.requestMultiple(permissions);
-      if (NativeModules.DialerModule?.requestDefaultDialer) {
-        NativeModules.DialerModule.requestDefaultDialer();
+  const requestPermissions = async () => {
+    try {
+      if (Platform.OS === 'android') {
+        const permissions = [
+          PermissionsAndroid.PERMISSIONS.READ_CONTACTS,
+          PermissionsAndroid.PERMISSIONS.READ_CALL_LOG,
+          PermissionsAndroid.PERMISSIONS.READ_PHONE_STATE,
+          PermissionsAndroid.PERMISSIONS.CALL_PHONE,
+        ];
+        
+        await PermissionsAndroid.requestMultiple(permissions);
+        
+        if (NativeModules.DialerModule?.requestDefaultDialer) {
+          NativeModules.DialerModule.requestDefaultDialer();
+        }
+        
+        // Navigate after request
+        navigation.replace('MainTabs');
+      } else if (Platform.OS === 'ios') {
+        Alert.alert(
+          "iOS Protection",
+          "On iOS, CallerID works via CallKit. Please enable our extension in Settings > Phone > Call Blocking & Identification.",
+          [{ text: "Understood", onPress: () => navigation.replace('MainTabs') }]
+        );
       }
-      // ... etc
-    } else if (Platform.OS === 'ios') {
-      // iOS APPROACH:
-      // 1. You can only request Contacts.
-      // 2. You cannot request "Default Dialer" or "Overlay".
-      // 3. You should use a library like 'react-native-permissions' for iOS.
-      
-      Alert.alert(
-        "iOS Protection",
-        "On iOS, CallerID works via CallKit. Please enable our extension in iPhone Settings > Phone > Call Blocking & Identification after the app opens.",
-        [{ text: "Understood", onPress: () => navigation.replace('MainTabs') }]
-      );
+    } catch (err) {
+      navigation.replace('Onboarding');
     }
-  } catch (err) {
-    navigation.replace('MainTabs');
-  }
-};
+  };
 
   return (
-    <View style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#FFF" />
+    <SafeAreaView style={styles.container}>
+      <StatusBar barStyle="light-content" backgroundColor="#0F1724" />
       
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
             <View style={styles.shieldIcon}>
-                <Ionicons name="shield-checkmark" size={50} color="#007AFF" />
+                <View style={styles.shieldPulse} />
+                <Ionicons name="shield-checkmark" size={44} color="#5EE7DF" />
             </View>
             <Text style={styles.headerTitle}>Security Setup</Text>
             <Text style={styles.headerSub}>
-                Enable these settings to start identifying spam and unknown callers in real-time.
+                Grant these permissions to activate high-performance spam detection and real-time caller ID.
             </Text>
         </View>
 
@@ -81,17 +77,17 @@ const requestPermissions = async () => {
             <PermissionItem 
               icon="phone-portrait-outline" 
               title="Default Phone App" 
-              desc="Identify callers automatically as the phone rings." 
+              desc="Required to identify callers automatically as the phone rings." 
             />
             <PermissionItem 
               icon="people-outline" 
               title="Contacts & Logs" 
-              desc="Show names for saved contacts and your recent call history." 
+              desc="Allows us to show names for saved contacts and recent history." 
             />
             <PermissionItem 
-              icon="copy-outline" 
+              icon="layers-outline" 
               title="Display Over Apps" 
-              desc="Shows a popup with caller info on top of your current screen." 
+              desc="Shows a helpful info popup on top of incoming call screens." 
             />
         </View>
       </ScrollView>
@@ -99,86 +95,84 @@ const requestPermissions = async () => {
       <View style={styles.footer}>
         <TouchableOpacity style={styles.btn} onPress={requestPermissions} activeOpacity={0.8}>
           <Text style={styles.btnText}>Grant Permissions</Text>
-          <Ionicons name="chevron-forward" size={20} color="#FFF" />
+          <Ionicons name="chevron-forward" size={20} color="#0F1724" />
         </TouchableOpacity>
         <TouchableOpacity 
             style={styles.skipBtn} 
-             onPress={() => navigation.replace('MainTabs')}
-            
+            onPress={() => navigation.replace('MainTabs')}
         >
             <Text style={styles.skipText}>Set up later in Settings</Text>
         </TouchableOpacity>
       </View>
-    </View>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F8F9FA' },
-  scroll: { paddingBottom: 40 },
+  container: { flex: 1, backgroundColor: '#0F1724' },
+  scroll: { paddingBottom: 20 },
   header: { 
-    backgroundColor: '#FFF', 
     padding: 30, 
-    paddingTop: 60, 
-    borderBottomLeftRadius: 40, 
-    borderBottomRightRadius: 40,
+    paddingTop: 20, 
     alignItems: 'center',
-    elevation: 4,
-    shadowColor: '#000',
-    shadowOpacity: 0.05,
-    shadowRadius: 10,
   },
   shieldIcon: {
-    width: 90,
-    height: 90,
-    borderRadius: 45,
-    backgroundColor: '#E7F2FF',
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: 'rgba(94,231,223,0.1)',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 20
+    marginBottom: 25,
+    borderWidth: 1,
+    borderColor: 'rgba(94,231,223,0.2)'
   },
-  headerTitle: { fontSize: 32, fontWeight: '900', color: '#1A1C1E', textAlign: 'center' },
-  headerSub: { fontSize: 16, color: '#6C757D', textAlign: 'center', marginTop: 12, lineHeight: 22 },
+  shieldPulse: {
+    position: 'absolute',
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    borderWidth: 1,
+    borderColor: 'rgba(94,231,223,0.1)',
+  },
+  headerTitle: { fontSize: 30, fontWeight: '800', color: '#F4F7FB', textAlign: 'center' },
+  headerSub: { fontSize: 15, color: '#8A95A8', textAlign: 'center', marginTop: 12, lineHeight: 22 },
   
-  listContainer: { padding: 25, marginTop: 10 },
+  listContainer: { paddingHorizontal: 25 },
   pItem: { 
     flexDirection: 'row', 
-    marginBottom: 25, 
-    backgroundColor: '#FFF', 
-    padding: 15, 
+    marginBottom: 16, 
+    backgroundColor: '#1A2233', 
+    padding: 16, 
     borderRadius: 20,
     alignItems: 'center',
-    elevation: 1,
+    borderWidth: 1,
+    borderColor: 'rgba(80,95,120,0.1)',
   },
   iconContainer: {
-    width: 50,
-    height: 50,
-    borderRadius: 15,
-    backgroundColor: '#F0F3F7',
+    width: 48,
+    height: 48,
+    borderRadius: 14,
+    backgroundColor: 'rgba(255,255,255,0.03)',
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 15
+    marginRight: 16
   },
-  pTitle: { fontSize: 17, fontWeight: 'bold', color: '#333' },
-  pDesc: { fontSize: 13, color: '#777', marginTop: 2, lineHeight: 18 },
+  pTitle: { fontSize: 16, fontWeight: '700', color: '#F4F7FB' },
+  pDesc: { fontSize: 12, color: '#8A95A8', marginTop: 4, lineHeight: 18 },
   
-  footer: { padding: 25, backgroundColor: 'transparent' },
+  footer: { padding: 25 },
   btn: { 
-    backgroundColor: '#007AFF', 
-    height: 65, 
-    borderRadius: 20, 
+    backgroundColor: '#5EE7DF', 
+    height: 60, 
+    borderRadius: 16, 
     flexDirection: 'row',
     alignItems: 'center', 
     justifyContent: 'center',
-    elevation: 8,
-    shadowColor: '#007AFF',
-    shadowOpacity: 0.3,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 4 }
   },
-  btnText: { color: '#FFF', fontSize: 18, fontWeight: 'bold', marginRight: 8 },
-  skipBtn: { marginTop: 15, alignItems: 'center' },
-  skipText: { color: '#ADB5BD', fontSize: 14, fontWeight: '600' }
+  btnText: { color: '#0F1724', fontSize: 18, fontWeight: '800', marginRight: 8 },
+  skipBtn: { marginTop: 20, alignItems: 'center' },
+  skipText: { color: '#8A95A8', fontSize: 14, fontWeight: '500' }
 });
 
 export default PermissionsScreen;

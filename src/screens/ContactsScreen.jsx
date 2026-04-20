@@ -1,67 +1,25 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { 
-  View, Text, FlatList, StyleSheet, TextInput, 
-  TouchableOpacity, ActivityIndicator, Linking, RefreshControl 
-} from 'react-native';
-import Contacts from 'react-native-contacts';
+import React, { useState, useEffect } from 'react';
+import { View, Text, FlatList, StyleSheet, TextInput, TouchableOpacity, ActivityIndicator, Linking, RefreshControl } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
+import { useContacts } from '../hooks/useContacts';
 
 const ContactsScreen = () => {
-  const [allContacts, setAllContacts] = useState([]);
+  const { allContacts, loading, refreshing, refresh } = useContacts();
   const [filteredContacts, setFilteredContacts] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
 
-    // 2. Pull-to-Refresh handler
-  const onRefresh = useCallback(() => {
-    setRefreshing(true);
-    loadContacts();
-  }, []);
-
-  
   useEffect(() => {
-    loadContacts();
-  }, []);
-
-  const loadContacts = async () => {
-    try {
-      const contacts = await Contacts.getAll();
-      const sorted = contacts.sort((a, b) => 
-        (a.displayName || '').localeCompare(b.displayName || '')
-      );
-      setAllContacts(sorted);
-      setFilteredContacts(sorted);
-    } catch (error) {
-      console.error("Failed to load contacts:", error);
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  };
-
-
+    setFilteredContacts(allContacts);
+  }, [allContacts]);
 
   const handleSearch = (text) => {
     setSearchQuery(text);
-    if (text.trim() === '') {
-      setFilteredContacts(allContacts);
-      return;
-    }
-
     const filtered = allContacts.filter((contact) => {
-      const name = contact.displayName?.toLowerCase() || '';
-      // Search through ALL phone numbers for this contact
+      const name = (contact.displayName || '').toLowerCase();
       const phoneMatch = contact.phoneNumbers.some(p => p.number.includes(text));
       return name.includes(text.toLowerCase()) || phoneMatch;
     });
     setFilteredContacts(filtered);
-  };
-
-  const makeCall = (phoneNumber) => {
-    if (phoneNumber) {
-      Linking.openURL(`tel:${phoneNumber}`);
-    }
   };
 
   const renderItem = ({ item }) => (
@@ -76,8 +34,8 @@ const ContactsScreen = () => {
         </View>
       </View>
       {item.phoneNumbers.length > 0 && (
-        <TouchableOpacity style={styles.callButton} onPress={() => makeCall(item.phoneNumbers[0].number)}>
-          <Icon name="call" size={22} color="#4CAF50" />
+        <TouchableOpacity style={styles.callButton} onPress={() => Linking.openURL(`tel:${item.phoneNumbers[0].number}`)}>
+          <Icon name="call" size={22} color="#5EE7DF" />
         </TouchableOpacity>
       )}
     </View>
@@ -87,7 +45,7 @@ const ContactsScreen = () => {
     <View style={styles.container}>
       <View style={styles.searchContainer}>
         <View style={styles.searchBar}>
-          <Icon name="search" size={20} color="#999" style={styles.searchIcon} />
+          <Icon name="search" size={20} color="#999" />
           <TextInput
             placeholder="Search contacts..."
             placeholderTextColor="#999"
@@ -98,22 +56,15 @@ const ContactsScreen = () => {
         </View>
       </View>
 
-      {loading && allContacts.length === 0 ? (
-        <ActivityIndicator size="large" color="#4285F4" style={{ marginTop: 50 }} />
+      {loading ? (
+        <ActivityIndicator size="large" color="#5EE7DF" style={{ marginTop: 50 }} />
       ) : (
         <FlatList
           data={filteredContacts}
           keyExtractor={(item) => item.recordID}
           renderItem={renderItem}
-          // 3. Add Pull-to-Refresh here
-          refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#4285F4']} />
-          }
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refresh} tintColor="#5EE7DF" />}
           ListEmptyComponent={<Text style={styles.empty}>No contacts found</Text>}
-          // 4. Optimization for large lists
-          initialNumToRender={15}
-          maxToRenderPerBatch={10}
-          windowSize={5}
         />
       )}
     </View>
@@ -121,19 +72,18 @@ const ContactsScreen = () => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff' },
-  searchContainer: { padding: 10, backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#eee' },
-  searchBar: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#f0f2f5', borderRadius: 10, paddingHorizontal: 10 },
-  searchIcon: { marginRight: 10 },
-  input: { flex: 1, height: 45, fontSize: 16, color: '#000' },
-  contactItem: { flexDirection: 'row', padding: 15, alignItems: 'center', justifyContent: 'space-between', borderBottomWidth: 1, borderBottomColor: '#f9f9f9' },
+  container: { flex: 1, backgroundColor: '#0F1724' },
+  searchContainer: { padding: 10, backgroundColor: '#1A2233' },
+  searchBar: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#0F1724', borderRadius: 10, paddingHorizontal: 12 },
+  input: { flex: 1, height: 45, color: '#F4F7FB', marginLeft: 10 },
+  contactItem: { flexDirection: 'row', padding: 15, alignItems: 'center', borderBottomWidth: 1, borderBottomColor: 'rgba(80,95,120,0.1)' },
   leftContent: { flexDirection: 'row', alignItems: 'center', flex: 1 },
-  avatar: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#4285F4', justifyContent: 'center', alignItems: 'center', marginRight: 15 },
-  avatarText: { color: '#fff', fontWeight: 'bold' },
-  name: { fontSize: 16, fontWeight: '600' },
-  number: { color: '#666', fontSize: 13 },
-  callButton: { padding: 10, marginLeft: 10 },
-  empty: { textAlign: 'center', marginTop: 40, color: '#999' }
+  avatar: { width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(94,231,223,0.1)', justifyContent: 'center', alignItems: 'center', marginRight: 15 },
+  avatarText: { color: '#5EE7DF', fontWeight: 'bold', fontSize: 18 },
+  name: { fontSize: 16, fontWeight: '600', color: '#F4F7FB' },
+  number: { color: '#8A95A8', fontSize: 13, marginTop: 2 },
+  callButton: { padding: 10 },
+  empty: { textAlign: 'center', marginTop: 40, color: '#8A95A8' }
 });
 
 export default ContactsScreen;

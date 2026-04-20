@@ -1,15 +1,22 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Linking, FlatList } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Linking, FlatList, StatusBar, Dimensions } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import Contacts from 'react-native-contacts';
 import { SafeAreaView } from 'react-native-safe-area-context';
+
+const { height } = Dimensions.get('window');
 
 const DialerScreen = () => {
   const [number, setNumber] = useState('');
   const [allContacts, setAllContacts] = useState([]);
   const [matchedContacts, setMatchedContacts] = useState([]);
 
-  const keys = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '*', '0', '#'];
+  const keys = [
+    { num: '1', sub: ' ' }, { num: '2', sub: 'ABC' }, { num: '3', sub: 'DEF' },
+    { num: '4', sub: 'GHI' }, { num: '5', sub: 'JKL' }, { num: '6', sub: 'MNO' },
+    { num: '7', sub: 'PQRS' }, { num: '8', sub: 'TUV' }, { num: '9', sub: 'WXYZ' },
+    { num: '*', sub: ' ' }, { num: '0', sub: '+' }, { num: '#', sub: ' ' },
+  ];
 
   useEffect(() => {
     Contacts.getAll()
@@ -23,7 +30,7 @@ const DialerScreen = () => {
       const matches = allContacts.filter(contact => 
         contact.phoneNumbers.some(p => p.number.replace(/\D/g, '').includes(cleanTyped))
       );
-      setMatchedContacts(matches.slice(0, 3)); // Reduced to 2 to save vertical space
+      setMatchedContacts(matches.slice(0, 3)); 
     } else {
       setMatchedContacts([]);
     }
@@ -34,14 +41,14 @@ const DialerScreen = () => {
   
   const makeCall = (numToCall) => {
     const finalNum = numToCall || number;
-    if (finalNum.length > 0) {
-      Linking.openURL(`tel:${finalNum}`);
-    }
+    if (finalNum.length > 0) Linking.openURL(`tel:${finalNum}`);
   };
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* 1. Suggestions Area - Moved down from header */}
+      <StatusBar barStyle="light-content" />
+      
+      {/* 1. Suggestions Area */}
       <View style={styles.suggestionsContainer}>
         {matchedContacts.map((contact, index) => (
           <TouchableOpacity 
@@ -49,47 +56,59 @@ const DialerScreen = () => {
             style={styles.suggestionItem}
             onPress={() => makeCall(contact.phoneNumbers[0].number)}
           >
-            <Icon name="person-circle" size={24} color="#4285F4" />
+            <View style={styles.suggestAvatar}>
+               <Text style={styles.suggestAvatarText}>{contact.givenName?.[0]}</Text>
+            </View>
             <View style={styles.suggestionTextWrapper}>
               <Text style={styles.suggestionName} numberOfLines={1}>{contact.displayName}</Text>
               <Text style={styles.suggestionNumber}>{contact.phoneNumbers[0].number}</Text>
             </View>
-            <Icon name="call" size={20} color="#4CAF50" />
           </TouchableOpacity>
         ))}
       </View>
 
-      {/* 2. Number Display Area */}
+      {/* 2. Number Display Area with Integrated Red Delete Button */}
       <View style={styles.displayContainer}>
+        {/* Empty view to balance the center alignment of the number */}
+        <View style={styles.sideAction} />
+        
         <Text style={styles.displayNumber} numberOfLines={1} adjustsFontSizeToFit>
           {number}
         </Text>
-        {number.length > 0 && (
-          <TouchableOpacity onPress={handleDelete} style={styles.deleteBtn}>
-            <Icon name="backspace-outline" size={30} color="#666" />
-          </TouchableOpacity>
-        )}
+        
+        <View style={styles.sideAction}>
+          {number.length > 0 && (
+            <TouchableOpacity onPress={handleDelete} style={styles.deleteBtn}>
+              <Icon name="backspace" size={28} color="#F26D6D" />
+            </TouchableOpacity>
+          )}
+        </View>
       </View>
 
-      {/* 3. Keypad - Use flex to take up middle space */}
+      {/* 3. Keypad */}
       <View style={styles.keypadWrapper}>
         <FlatList
           data={keys}
           renderItem={({ item }) => (
-            <TouchableOpacity style={styles.key} onPress={() => handlePress(item)}>
-              <Text style={styles.keyText}>{item}</Text>
+            <TouchableOpacity 
+              style={styles.key} 
+              onPress={() => handlePress(item.num)}
+              onLongPress={() => item.num === '0' && handlePress('+')}
+            >
+              <Text style={styles.keyText}>{item.num}</Text>
+              <Text style={styles.subText}>{item.sub}</Text>
             </TouchableOpacity>
           )}
-          keyExtractor={(item) => item}
+          keyExtractor={(item) => item.num}
           numColumns={3}
           scrollEnabled={false}
         />
       </View>
 
-      {/* 4. Footer - Call Button fixed at bottom */}
+      {/* 4. Footer */}
       <View style={styles.footer}>
         <TouchableOpacity style={styles.callButton} onPress={() => makeCall()}>
-          <Icon name="call" size={35} color="#fff" />
+          <Icon name="call" size={28} color="#0F1724" />
         </TouchableOpacity>
       </View>
     </SafeAreaView>
@@ -97,74 +116,84 @@ const DialerScreen = () => {
 };
 
 const styles = StyleSheet.create({
-  container: { 
-    flex: 1, 
-    backgroundColor: '#fff',
-  },
+  container: { flex: 1, backgroundColor: '#0F1724' },
   suggestionsContainer: {
-    height: 140, // Slightly shorter
-    paddingHorizontal: 20,
-    justifyContent: 'center', // Centers content vertically in this block
-    paddingTop: 10, // Gives room below the header
+    height: 60,
+    paddingHorizontal: 40,
+    justifyContent: 'center',
   },
   suggestionItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#f8f9fa',
+    backgroundColor: 'rgba(255,255,255,0.05)',
     padding: 8,
     borderRadius: 12,
-    marginBottom: 5,
-    borderWidth: 1,
-    borderColor: '#eee'
   },
-  suggestionTextWrapper: { flex: 1, marginLeft: 10 },
-  suggestionName: { fontSize: 15, fontWeight: '600', color: '#333' },
-  suggestionNumber: { fontSize: 12, color: '#666' },
+  suggestAvatar: { width: 30, height: 30, borderRadius: 15, backgroundColor: 'rgba(94,231,223,0.2)', justifyContent: 'center', alignItems: 'center' },
+  suggestAvatarText: { color: '#5EE7DF', fontWeight: 'bold', fontSize: 12 },
+  suggestionTextWrapper: { flex: 1, marginLeft: 12 },
+  suggestionName: { fontSize: 14, fontWeight: '600', color: '#F4F7FB' },
+  suggestionNumber: { fontSize: 11, color: '#8A95A8' },
   
   displayContainer: { 
     height: 80, 
-    flexDirection: 'row', 
+    flexDirection: 'row',
     alignItems: 'center', 
-    paddingHorizontal: 30,
-    marginBottom: 10
+    paddingHorizontal: 20,
+    justifyContent: 'space-between'
   },
-  displayNumber: { fontSize: 45, fontWeight: '300', color: '#000', flex: 1, textAlign: 'center' },
-  deleteBtn: { padding: 5 },
+  displayNumber: { 
+    fontSize: 44, 
+    fontWeight: '300', 
+    color: '#F4F7FB', 
+    flex: 1, 
+    textAlign: 'center',
+    letterSpacing: 2
+  },
+  sideAction: {
+    width: 60,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  deleteBtn: {
+    padding: 10,
+  },
 
   keypadWrapper: {
-    flex: 1, // Takes up all remaining space between display and footer
-    justifyContent: 'center',
+    flex: 4,
     paddingHorizontal: 30,
+    justifyContent: 'center',
   },
   key: { 
     flex: 1, 
-    aspectRatio: 1.3, // Makes buttons slightly wider/shorter to fit
+    aspectRatio: 1.2, 
     justifyContent: 'center', 
     alignItems: 'center', 
-    margin: 5,
-    borderRadius: 50,
-    backgroundColor: '#f0f2f5'
+    margin: 6, 
+    borderRadius: 16,
+    backgroundColor: 'rgba(255,255,255,0.03)',
   },
-  keyText: { fontSize: 28, color: '#000' },
+  keyText: { fontSize: 32, color: '#F4F7FB' },
+  subText: { fontSize: 10, color: '#8A95A8', marginTop: -2 },
 
   footer: { 
-    height: 100, // Fixed height for footer
-    alignItems: 'center', 
+    flex: 1,
     justifyContent: 'center',
-    paddingBottom: 20 
+    alignItems: 'center',
+    paddingBottom: 10
   },
   callButton: { 
-    width: 70, 
-    height: 70, 
-    borderRadius: 35, 
-    backgroundColor: '#4CAF50', 
+    width: 64, 
+    height: 64, 
+    borderRadius: 32, 
+    backgroundColor: '#5EE7DF', 
     justifyContent: 'center', 
     alignItems: 'center',
-    elevation: 4,
-    shadowColor: '#000',
-    shadowOpacity: 0.2,
-    shadowRadius: 5,
-  }
+    elevation: 5,
+    shadowColor: '#5EE7DF',
+    shadowOpacity: 0.3,
+    shadowRadius: 10,
+  },
 });
 
 export default DialerScreen;

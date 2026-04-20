@@ -10,6 +10,7 @@ import OnboardingScreen from './src/screens/OnboardingScreen';
 import LoginScreen from './src/screens/LoginScreen';
 import PermissionsScreen from './src/screens/PermissionsScreen';
 import ProfileScreen from './src/screens/ProfileScreen';
+import SettingsScreen from './src/screens/SettingsScreen'
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import TabNavigator from './src/navigation/TabNavigator';
 
@@ -29,6 +30,7 @@ export default function App() {
         <Stack.Screen name="Onboarding" component={OnboardingScreen} />
         <Stack.Screen name="Login" component={LoginScreen} />
         <Stack.Screen name="Permissions" component={PermissionsScreen} />
+        <Stack.Screen name='Settings' component={SettingsScreen} />
         
         {/* Main App Screens */}
         <Stack.Screen name="MainApp" component={ProfileScreen} /> 

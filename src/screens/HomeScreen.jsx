@@ -1,130 +1,75 @@
-import React, { useState } from 'react';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  Switch, 
-  TouchableOpacity, 
-  NativeModules, // 1. Import NativeModules
-  Platform, 
-  Alert 
-} from 'react-native';
-import Icon from 'react-native-vector-icons/Ionicons';
+import React from "react";
+import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, Image, SafeAreaView, ActivityIndicator } from "react-native";
+import { Search, Sparkles, Settings } from "lucide-react-native";
+import { useContacts } from "../hooks/useContacts";
 
-// 2. Access your custom module
-const { DialerModule } = NativeModules;
-console.log("Available Native Modules:", Object.keys(NativeModules));
-
-const HomeScreen = () => {
-  const [isProtected, setIsProtected] = useState(true);
-
-  // 3. Function to trigger the Default Dialer prompt
-  const handleSetDefaultDialer = () => {
-    if (Platform.OS === 'android') {
-      if (DialerModule && DialerModule.requestDefaultDialer) {
-        DialerModule.requestDefaultDialer();
-      } else {
-        Alert.alert(
-          "Module Error", 
-          "DialerModule not found. Make sure you rebuilt the app using 'npx react-native run-android'."
-        );
-      }
-    } else {
-      Alert.alert("Not Supported", "Default dialer roles are only available on Android.");
-    }
-  };
-
-  return (
-    <View style={styles.container}>
-      {/* Protection Status Card */}
-      <View style={[styles.statusCard, { backgroundColor: isProtected ? '#E8F5E9' : '#FFEBEE' }]}>
-        <Icon 
-          name={isProtected ? "shield-checkmark" : "shield-alert"} 
-          size={80} 
-          color={isProtected ? "#4CAF50" : "#F44336"} 
-        />
-        <Text style={styles.statusTitle}>
-          {isProtected ? "Protection is Active" : "Protection is Disabled"}
-        </Text>
-        <Text style={styles.statusSubtext}>
-          {isProtected ? "We are monitoring incoming calls for spam." : "Your phone is currently at risk of spam calls."}
-        </Text>
-      </View>
-
-      {/* Spam Toggle */}
-      <View style={styles.toggleRow}>
-        <Text style={styles.toggleText}>Real-time Spam Detection</Text>
-        <Switch 
-          value={isProtected} 
-          onValueChange={setIsProtected} 
-          trackColor={{ false: "#767577", true: "#4285F4" }}
-        />
-      </View>
-
-      {/* 4. New Button to request Default Dialer role */}
-      <TouchableOpacity 
-        style={styles.dialerBtn} 
-        onPress={handleSetDefaultDialer}
-      >
-        <Icon name="phone-portrait-outline" size={24} color="#FFF" />
-        <Text style={styles.dialerBtnText}>Set as Default Dialer</Text>
-      </TouchableOpacity>
-
-      <Text style={styles.infoNote}>
-        To identify callers and block spam effectively, CallerID must be your default phone app.
-      </Text>
-    </View>
-  );
+const theme = {
+  colors: {
+    background: "#0F1724",
+    card: "#1A2233",
+    foreground: "#F4F7FB",
+    mutedForeground: "#8A95A8",
+    primary: "#5EE7DF",
+    primarySoft: "rgba(94,231,223,0.15)",
+    border: "rgba(80,95,120,0.4)",
+  },
+  radius: { lg: 16 },
 };
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F8F9FA', padding: 20 },
-  statusCard: { 
-    padding: 30, 
-    borderRadius: 20, 
-    alignItems: 'center', 
-    marginTop: 20,
-    elevation: 3,
-    shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowRadius: 10
-  },
-  statusTitle: { fontSize: 22, fontWeight: 'bold', marginTop: 15 },
-  statusSubtext: { fontSize: 14, color: '#666', textAlign: 'center', marginTop: 10 },
-  toggleRow: { 
-    flexDirection: 'row', 
-    justifyContent: 'space-between', 
-    alignItems: 'center', 
-    marginTop: 30,
-    padding: 20,
-    backgroundColor: '#FFF',
-    borderRadius: 15
-  },
-  toggleText: { fontSize: 16, fontWeight: '600' },
-  // Styles for the new Dialer button
-  dialerBtn: {
-    flexDirection: 'row',
-    backgroundColor: '#4285F4',
-    padding: 18,
-    borderRadius: 15,
-    marginTop: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-    elevation: 2
-  },
-  dialerBtnText: {
-    color: '#FFF',
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginLeft: 10
-  },
-  infoNote: {
-    textAlign: 'center',
-    color: '#999',
-    fontSize: 12,
-    marginTop: 15,
-    lineHeight: 18
-  }
-});
+export default function HomeScreen({navigation}) {
+  const { allContacts, loading } = useContacts();
 
-export default HomeScreen;
+  return (
+    <SafeAreaView style={styles.safe}>
+      <ScrollView style={styles.container}>
+        <View style={styles.header}>
+          <Text style={styles.name}>Welcome back</Text>
+          <TouchableOpacity onPress={() => navigation.navigate('Settings')} style={styles.iconCircle}><Settings size={16} color={theme.colors.mutedForeground} /></TouchableOpacity>
+        </View>
+
+        <View style={styles.searchBox}>
+          <Search size={16} color={theme.colors.mutedForeground} />
+          <TextInput placeholder="Search..." placeholderTextColor={theme.colors.mutedForeground} style={styles.searchInput} />
+        </View>
+
+        <View style={{ marginTop: 24 }}>
+          <View style={styles.sectionHeader}>
+            <Sparkles size={14} color={theme.colors.primary} />
+            <Text style={styles.sectionTitle}>Suggested for you</Text>
+          </View>
+          
+          {loading ? (
+            <ActivityIndicator color={theme.colors.primary} />
+          ) : (
+            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+              {allContacts.slice(0, 8).map((c) => (
+                <View key={c.recordID} style={styles.suggestCard}>
+                  <View style={styles.avatarPlaceholder}>
+                    <Text style={styles.avatarText}>{c.givenName?.[0]}</Text>
+                  </View>
+                  <Text style={styles.suggestName} numberOfLines={1}>{c.givenName}</Text>
+                </View>
+              ))}
+            </ScrollView>
+          )}
+        </View>
+      </ScrollView>
+    </SafeAreaView>
+  );
+}
+
+const styles = StyleSheet.create({
+  safe: { flex: 1, backgroundColor: theme.colors.background },
+  container: { flex: 1, paddingHorizontal: 20 },
+  header: { flexDirection: "row", justifyContent: "space-between", marginTop: 20 },
+  name: { fontSize: 20, fontWeight: "600", color: theme.colors.foreground },
+  iconCircle: { width: 40, height: 40, borderRadius: 20, backgroundColor: theme.colors.card, alignItems: "center", justifyContent: "center" },
+  searchBox: { marginTop: 20, flexDirection: "row", alignItems: "center", gap: 12, backgroundColor: theme.colors.card, borderRadius: theme.radius.lg, padding: 12 },
+  searchInput: { flex: 1, color: theme.colors.foreground },
+  sectionHeader: { flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 12 },
+  sectionTitle: { fontSize: 14, fontWeight: "600", color: theme.colors.foreground },
+  suggestCard: { width: 100, alignItems: "center", backgroundColor: theme.colors.card, borderRadius: theme.radius.lg, padding: 12, marginRight: 12 },
+  avatarPlaceholder: { width: 50, height: 50, borderRadius: 25, backgroundColor: theme.colors.primarySoft, justifyContent: "center", alignItems: "center" },
+  avatarText: { color: theme.colors.primary, fontWeight: "bold" },
+  suggestName: { fontSize: 12, color: theme.colors.foreground, marginTop: 8 },
+});

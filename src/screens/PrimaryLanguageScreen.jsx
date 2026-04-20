@@ -5,14 +5,15 @@ import {
   StyleSheet, 
   FlatList, 
   TouchableOpacity, 
-  Dimensions
+  Dimensions,
+  StatusBar
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 const { width } = Dimensions.get('window');
-const COLUMN_WIDTH = (width - 60) / 2; // Perfect spacing for 2 columns
+const COLUMN_WIDTH = (width - 60) / 2;
 
 const LANGUAGES = [
   { id: '1', name: 'English', code: 'en', flag: '🇺🇸' },
@@ -28,9 +29,10 @@ const PrimaryLanguageScreen = ({ navigation }) => {
 
   const handleContinue = async () => {
     try {
-      await AsyncStorage.setItem('alreadyLaunched', 'true'); // Important for your Splash logic!
+      await AsyncStorage.setItem('alreadyLaunched', 'true');
       await AsyncStorage.setItem('primaryLanguage', selectedLang);
-      navigation.navigate('SecondaryLanguage', { primaryCode: selectedLang }); // Or 'SecondaryLanguage' if you still need it
+      // Navigation - ensure 'Login' or 'SecondaryLanguage' exists in your navigator
+      navigation.navigate('SecondaryLanguage'); 
     } catch (e) {
       console.error("Failed to save language", e);
     }
@@ -40,14 +42,14 @@ const PrimaryLanguageScreen = ({ navigation }) => {
     const isSelected = selectedLang === item.code;
     return (
       <TouchableOpacity 
-        activeOpacity={0.8}
+        activeOpacity={0.9}
         style={[
           styles.card, 
           isSelected && styles.selectedCard
         ]} 
         onPress={() => setSelectedLang(item.code)}
       >
-        <View style={styles.flagCircle}>
+        <View style={[styles.flagCircle, isSelected && styles.selectedFlagCircle]}>
           <Text style={styles.flagEmoji}>{item.flag}</Text>
         </View>
         
@@ -57,7 +59,7 @@ const PrimaryLanguageScreen = ({ navigation }) => {
 
         {isSelected && (
           <View style={styles.checkBadge}>
-            <Ionicons name="checkmark-sharp" size={16} color="#FFF" />
+            <Ionicons name="checkmark-circle" size={24} color="#5EE7DF" />
           </View>
         )}
       </TouchableOpacity>
@@ -66,20 +68,21 @@ const PrimaryLanguageScreen = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.container}>
+      <StatusBar barStyle="light-content" />
       <View style={styles.header}>
         <View style={styles.stepIndicator}>
           <View style={styles.stepActive} />
           <View style={styles.stepInactive} />
         </View>
         <Text style={styles.title}>Language</Text>
-        <Text style={styles.subtitle}>Which language do you prefer to use for your protection?</Text>
+        <Text style={styles.subtitle}>Choose your primary language for real-time protection alerts.</Text>
       </View>
 
       <FlatList
         data={LANGUAGES}
         renderItem={renderItem}
         keyExtractor={item => item.id}
-        numColumns={2} // THE GRID MAGIC
+        numColumns={2}
         columnWrapperStyle={styles.row}
         contentContainerStyle={styles.listPadding}
         showsVerticalScrollIndicator={false}
@@ -88,7 +91,7 @@ const PrimaryLanguageScreen = ({ navigation }) => {
       <View style={styles.footer}>
         <TouchableOpacity style={styles.button} onPress={handleContinue}>
           <Text style={styles.buttonText}>Continue</Text>
-          <Ionicons name="arrow-forward" size={20} color="#FFF" style={{marginLeft: 10}} />
+          <Ionicons name="chevron-forward" size={20} color="#0F1724" style={{marginLeft: 8}} />
         </TouchableOpacity>
       </View>
     </SafeAreaView>
@@ -98,27 +101,27 @@ const PrimaryLanguageScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F0F3F7', // Soft modern background
+    backgroundColor: '#0F1724', // Dark background
   },
   header: {
     padding: 30,
-    paddingTop: 40,
+    paddingTop: 20,
   },
   stepIndicator: {
     flexDirection: 'row',
-    marginBottom: 15,
+    marginBottom: 20,
   },
-  stepActive: { width: 30, height: 6, backgroundColor: '#007AFF', borderRadius: 3, marginRight: 5 },
-  stepInactive: { width: 10, height: 6, backgroundColor: '#D1D9E6', borderRadius: 3 },
+  stepActive: { width: 40, height: 4, backgroundColor: '#5EE7DF', borderRadius: 2, marginRight: 6 },
+  stepInactive: { width: 12, height: 4, backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: 2 },
   title: {
-    fontSize: 34,
-    fontWeight: '900',
-    color: '#1A1C1E',
+    fontSize: 32,
+    fontWeight: '800',
+    color: '#F4F7FB',
   },
   subtitle: {
-    fontSize: 16,
-    color: '#6C757D',
-    marginTop: 10,
+    fontSize: 15,
+    color: '#8A95A8',
+    marginTop: 8,
     lineHeight: 22,
   },
   listPadding: {
@@ -129,83 +132,63 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   card: {
-    backgroundColor: '#FFF',
+    backgroundColor: '#1A2233', // Card color
     width: COLUMN_WIDTH,
-    height: 160,
-    borderRadius: 24,
-    padding: 20,
+    height: 150,
+    borderRadius: 20,
     marginBottom: 20,
     alignItems: 'center',
     justifyContent: 'center',
-    // Shadow for iOS
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.05,
-    shadowRadius: 10,
-    // Elevation for Android
-    elevation: 2,
-    borderWidth: 2,
-    borderColor: 'transparent',
+    borderWidth: 1,
+    borderColor: 'rgba(80,95,120,0.2)',
   },
   selectedCard: {
-    borderColor: '#007AFF',
-    backgroundColor: '#FFFFFF',
-    elevation: 8,
-    shadowOpacity: 0.15,
-    transform: [{ scale: 1.02 }]
+    borderColor: '#5EE7DF',
+    backgroundColor: 'rgba(94,231,223,0.05)',
   },
   flagCircle: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: '#F8F9FA',
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: 'rgba(255,255,255,0.03)',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 15,
+    marginBottom: 12,
+  },
+  selectedFlagCircle: {
+    backgroundColor: 'rgba(94,231,223,0.1)',
   },
   flagEmoji: {
-    fontSize: 35,
+    fontSize: 32,
   },
   languageName: {
     fontSize: 16,
-    fontWeight: '700',
-    color: '#495057',
+    fontWeight: '600',
+    color: '#F4F7FB',
   },
   selectedText: {
-    color: '#007AFF',
+    color: '#5EE7DF',
   },
   checkBadge: {
     position: 'absolute',
-    top: 15,
-    right: 15,
-    backgroundColor: '#007AFF',
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
+    top: 12,
+    right: 12,
   },
   footer: {
     padding: 25,
-    backgroundColor: 'transparent',
   },
   button: {
-    backgroundColor: '#007AFF',
+    backgroundColor: '#5EE7DF',
     flexDirection: 'row',
-    height: 65,
-    borderRadius: 20,
+    height: 60,
+    borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
-    elevation: 5,
-    shadowColor: '#007AFF',
-    shadowOpacity: 0.3,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 5 },
   },
   buttonText: {
-    color: '#FFFFFF',
+    color: '#0F1724',
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: '700',
   },
 });
 

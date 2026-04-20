@@ -6,211 +6,173 @@ import {
   FlatList, 
   TouchableOpacity, 
   Dimensions, 
- 
+  Image, 
+  StatusBar 
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import Ionicons from 'react-native-vector-icons/Ionicons';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 
 const { width, height } = Dimensions.get('window');
 
-const SLIDES = [
+// 1. Define your onboarding steps
+const ONBOARDING_DATA = [
   {
     id: '1',
-    title: 'Identify Callers',
-    description: 'Instantly know who is calling even if the number isn’t in your contacts.',
-    icon: 'person-search-outline',
-    color: '#007AFF',
+    title: 'Instant Identity',
+    subtitle: 'Construct your digital identity to verify who is calling and who you are.',
+    // Replace with the generated PNG asset (Identity)
+    image: require('../assets/onboarding.png'), 
   },
   {
     id: '2',
-    title: 'Block Spam',
-    description: 'Our AI detects and blocks telemarketers and fraud calls automatically.',
-    icon: 'shield-checkmark-outline',
-    color: '#FF3B30',
+    title: 'Smart Verification',
+    subtitle: 'Our shield protects you from spam and fraud with real-time verification.',
+    // Reuse image_2.png (Verification Shield)
+    image: require('../assets/logo.png'), 
   },
   {
     id: '3',
-    title: 'Smart Dialer',
-    description: 'A powerful dialer with integrated search and smart call logs.',
-    icon: 'call-outline',
-    color: '#34C759',
+    title: 'Seamless Connection',
+    subtitle: 'Construct seamless, secure communication channels for your critical calls.',
+    // Replace with the generated PNG asset (Communication)
+    image: require('../assets/onboarding1.png'), 
   },
 ];
 
 const OnboardingScreen = ({ navigation }) => {
-  const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
-  const flatListRef = useRef();
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const flatListRef = useRef(null);
 
-  const updateCurrentSlideIndex = (e) => {
-    const contentOffsetX = e.nativeEvent.contentOffset.x;
-    const currentIndex = Math.round(contentOffsetX / width);
-    setCurrentSlideIndex(currentIndex);
-  };
-
-  const handleFinish = async () => {
-    try {
-      // Mark onboarding as complete
-      await AsyncStorage.setItem('alreadyLaunched', 'true');
-      navigation.replace('Login'); // Move to Google Login
-    } catch (e) {
-      navigation.replace('Login');
+  // Update index on scroll
+  const onViewableItemsChanged = useRef(({ viewableItems }) => {
+    if (viewableItems.length > 0) {
+      setCurrentIndex(viewableItems[0].index);
     }
-  };
+  }).current;
 
-  const Footer = () => (
-    <View style={styles.footer}>
-      {/* Pagination Dots */}
-      <View style={styles.indicatorContainer}>
-        {SLIDES.map((_, index) => (
-          <View 
-            key={index} 
-            style={[
-              styles.indicator, 
-              currentSlideIndex === index && styles.activeIndicator
-            ]} 
-          />
-        ))}
+  const viewConfigRef = useRef({ viewAreaCoveragePercentThreshold: 50 }).current;
+
+const handleNext = async () => {
+  if (currentIndex < ONBOARDING_DATA.length - 1) {
+    flatListRef.current?.scrollToIndex({ index: currentIndex + 1 });
+  } else {
+    // ONLY SET THIS HERE AT THE VERY END
+    await AsyncStorage.setItem('alreadyLaunched', 'true');
+    navigation.replace('PrimaryLanguage'); 
+  }
+};
+
+  const renderItem = ({ item }) => (
+    <View style={styles.slide}>
+      <View style={styles.imageContainer}>
+        <Image source={item.image} style={styles.image} resizeMode="contain" />
+        <View style={styles.imageGlow} />
       </View>
-
-      {/* Buttons */}
-      <View style={styles.buttonContainer}>
-        {currentSlideIndex === SLIDES.length - 1 ? (
-          <TouchableOpacity style={styles.getStartedBtn} onPress={handleFinish}>
-            <Text style={styles.getStartedText}>Get Started</Text>
-          </TouchableOpacity>
-        ) : (
-          <View style={styles.navButtons}>
-            <TouchableOpacity onPress={handleFinish}>
-              <Text style={styles.skipText}>Skip</Text>
-            </TouchableOpacity>
-            <TouchableOpacity 
-              style={styles.nextBtn} 
-              onPress={() => {
-                flatListRef.current.scrollToIndex({ index: currentSlideIndex + 1 });
-              }}
-            >
-              <Text style={styles.nextText}>Next</Text>
-            </TouchableOpacity>
-          </View>
-        )}
+      <View style={styles.textContainer}>
+        <Text style={styles.title}>{item.title}</Text>
+        <Text style={styles.subtitle}>{item.subtitle}</Text>
       </View>
     </View>
   );
 
   return (
     <SafeAreaView style={styles.container}>
+      <StatusBar barStyle="light-content" backgroundColor="#0F1724" />
+      
+      {/* 2. paging FlatList */}
       <FlatList
-        ref={flatListRef}
-        onMomentumScrollEnd={updateCurrentSlideIndex}
-        data={SLIDES}
+        data={ONBOARDING_DATA}
+        renderItem={renderItem}
+        keyExtractor={item => item.id}
         horizontal
         pagingEnabled
         showsHorizontalScrollIndicator={false}
-        renderItem={({ item }) => (
-          <View style={styles.slide}>
-            <View style={[styles.iconContainer, { backgroundColor: item.color + '15' }]}>
-              <Ionicons name={item.icon} size={100} color={item.color} />
-            </View>
-            <Text style={styles.title}>{item.title}</Text>
-            <Text style={styles.description}>{item.description}</Text>
-          </View>
-        )}
+        bounces={false}
+        onViewableItemsChanged={onViewableItemsChanged}
+        viewabilityConfig={viewConfigRef}
+        ref={flatListRef}
       />
-      <Footer />
+
+      {/* 3. Footer with Pagination and Button */}
+      <View style={styles.footer}>
+        {/* Pagination Dots */}
+        <View style={styles.paginationContainer}>
+          {ONBOARDING_DATA.map((_, index) => (
+            <View 
+              key={index} 
+              style={[
+                styles.dot, 
+                currentIndex === index && styles.activeDot
+              ]} 
+            />
+          ))}
+        </View>
+
+        {/* Action Button */}
+        <TouchableOpacity style={styles.button} onPress={handleNext} activeOpacity={0.8}>
+          <Text style={styles.buttonText}>
+            {currentIndex === ONBOARDING_DATA.length - 1 ? 'Get Started' : 'Next'}
+          </Text>
+          <Ionicons 
+            name={currentIndex === ONBOARDING_DATA.length - 1 ? "rocket-outline" : "chevron-forward"} 
+            size={20} 
+            color="#0F1724" 
+            style={{marginLeft: 8}} 
+          />
+        </TouchableOpacity>
+      </View>
     </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#FFFFFF',
-  },
-  slide: {
-    width,
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 40,
-  },
-  iconContainer: {
-    width: 200,
-    height: 200,
-    borderRadius: 100,
+  container: { flex: 1, backgroundColor: '#0F1724' },
+  slide: { width, alignItems: 'center', justifyContent: 'center', padding: 30 },
+  
+  imageContainer: {
+    position: 'relative',
     justifyContent: 'center',
     alignItems: 'center',
+    height: height * 0.45, // Allocate space for image
     marginBottom: 40,
   },
-  title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#1A1A1A',
-    textAlign: 'center',
-    marginBottom: 15,
+  image: { width: width * 0.7, height: width * 0.7, zIndex: 2 },
+  imageGlow: {
+    position: 'absolute',
+    width: width * 0.5,
+    height: width * 0.5,
+    borderRadius: width * 0.25,
+    backgroundColor: '#5EE7DF',
+    opacity: 0.05,
+    filter: 'blur(40px)', // Visual representation only
   },
-  description: {
-    fontSize: 16,
-    color: '#666',
-    textAlign: 'center',
-    lineHeight: 24,
-  },
-  footer: {
-    height: height * 0.2,
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-  },
-  indicatorContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    marginTop: 20,
-  },
-  indicator: {
-    height: 8,
-    width: 8,
-    borderRadius: 4,
-    backgroundColor: '#E0E0E0',
-    marginHorizontal: 4,
-  },
-  activeIndicator: {
-    backgroundColor: '#007AFF',
-    width: 20,
-  },
-  buttonContainer: {
-    marginBottom: 40,
-  },
-  navButtons: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  skipText: {
-    color: '#666',
-    fontSize: 16,
-    fontWeight: '600',
-    padding: 10,
-  },
-  nextBtn: {
-    backgroundColor: '#007AFF',
+
+  textContainer: { alignItems: 'center', paddingHorizontal: 10 },
+  title: { fontSize: 32, fontWeight: '800', color: '#F4F7FB', textAlign: 'center', letterSpacing: 1 },
+  subtitle: { fontSize: 16, color: '#8A95A8', textAlign: 'center', marginTop: 15, lineHeight: 24, paddingHorizontal: 15 },
+  
+  footer: { 
+    height: 150, 
+    justifyContent: 'space-between', 
+    alignItems: 'center', 
     paddingHorizontal: 30,
-    paddingVertical: 12,
-    borderRadius: 25,
+    paddingBottom: 30,
   },
-  nextText: {
-    color: '#FFF',
-    fontSize: 16,
-    fontWeight: 'bold',
+  paginationContainer: { flexDirection: 'row', height: 10 },
+  dot: { width: 10, height: 10, borderRadius: 5, backgroundColor: 'rgba(255,255,255,0.1)', marginHorizontal: 5 },
+  activeDot: { width: 30, backgroundColor: '#5EE7DF' }, // Teal accent
+  
+  button: { 
+    backgroundColor: '#5EE7DF', 
+    width: '100%', 
+    height: 60, 
+    borderRadius: 18, 
+    flexDirection: 'row',
+    alignItems: 'center', 
+    justifyContent: 'center' 
   },
-  getStartedBtn: {
-    backgroundColor: '#007AFF',
-    paddingVertical: 16,
-    borderRadius: 12,
-    alignItems: 'center',
-  },
-  getStartedText: {
-    color: '#FFF',
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
+  buttonText: { color: '#0F1724', fontSize: 18, fontWeight: '800' }
 });
 
 export default OnboardingScreen;
