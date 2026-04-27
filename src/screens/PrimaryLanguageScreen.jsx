@@ -1,97 +1,129 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  FlatList, 
-  TouchableOpacity, 
-  Dimensions,
-  StatusBar
+  View, Text, StyleSheet, FlatList, TextInput,
+  TouchableOpacity, Dimensions, StatusBar, Animated
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 const { width } = Dimensions.get('window');
-const COLUMN_WIDTH = (width - 60) / 2;
 
 const LANGUAGES = [
-  { id: '1', name: 'English', code: 'en', flag: '🇺🇸' },
-  { id: '2', name: 'Spanish', code: 'es', flag: '🇪🇸' },
-  { id: '3', name: 'French', code: 'fr', flag: '🇫🇷' },
-  { id: '4', name: 'Arabic', code: 'ar', flag: '🇸🇦' },
-  { id: '5', name: 'Hindi', code: 'hi', flag: '🇮🇳' },
-  { id: '6', name: 'Urdu', code: 'ur', flag: '🇵🇰' },
+  { id: '1', name: 'English', code: 'en', flag: '🇬🇧' },
+  { id: '2', name: 'Urdu', code: 'ur', flag: '🇵🇰' },
+  { id: '3', name: 'Arabic', code: 'ar', flag: '🇸🇦' },
+  { id: '4', name: 'German', code: 'de', flag: '🇩🇪' },
+  { id: '5', name: 'French', code: 'fr', flag: '🇫🇷' },
+  { id: '6', name: 'Spanish', code: 'es', flag: '🇪🇸' },
+  { id: '7', name: 'Hindi', code: 'hi', flag: '🇮🇳' },
+  { id: '8', name: 'Portuguese', code: 'pt', flag: '🇧🇷' },
+  { id: '9', name: 'Russian', code: 'ru', flag: '🇷🇺' },
+  { id: '10', name: 'Japanese', code: 'ja', flag: '🇯🇵' },
+  { id: '11', name: 'Chinese', code: 'zh', flag: '🇨🇳' },
+  { id: '12', name: 'Turkish', code: 'tr', flag: '🇹🇷' },
 ];
+
+const LanguageRow = ({ item, isSelected, onPress, index }) => {
+  const slideIn = useRef(new Animated.Value(30)).current;
+  const opacity = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(slideIn, {
+        toValue: 0, duration: 400, delay: index * 60, useNativeDriver: true,
+      }),
+      Animated.timing(opacity, {
+        toValue: 1, duration: 400, delay: index * 60, useNativeDriver: true,
+      })
+    ]).start();
+  }, []);
+
+  return (
+    <Animated.View style={{ opacity, transform: [{ translateX: slideIn }] }}>
+      <TouchableOpacity 
+        activeOpacity={0.7}
+        style={styles.rowItem} 
+        onPress={() => onPress(item.code)}
+      >
+        <View style={styles.leftContent}>
+          <Text style={styles.flag}>{item.flag}</Text>
+          <Text style={[styles.languageText, isSelected && styles.selectedLanguageText]}>
+            {item.name}
+          </Text>
+        </View>
+
+        <View style={[styles.radioOuter, isSelected && styles.radioOuterSelected]}>
+          {isSelected && <View style={styles.radioInner} />}
+          {!isSelected && <View style={styles.radioPlaceholder} />}
+        </View>
+      </TouchableOpacity>
+      <View style={styles.separator} />
+    </Animated.View>
+  );
+};
 
 const PrimaryLanguageScreen = ({ navigation }) => {
   const [selectedLang, setSelectedLang] = useState('en');
+  const [search, setSearch] = useState('');
 
-  const handleContinue = async () => {
-    try {
-      await AsyncStorage.setItem('alreadyLaunched', 'true');
-      await AsyncStorage.setItem('primaryLanguage', selectedLang);
-      // Navigation - ensure 'Login' or 'SecondaryLanguage' exists in your navigator
-      navigation.navigate('SecondaryLanguage'); 
-    } catch (e) {
-      console.error("Failed to save language", e);
-    }
-  };
+  const filteredLanguages = LANGUAGES.filter(lang => 
+    lang.name.toLowerCase().includes(search.toLowerCase())
+  );
 
-  const renderItem = ({ item }) => {
-    const isSelected = selectedLang === item.code;
-    return (
-      <TouchableOpacity 
-        activeOpacity={0.9}
-        style={[
-          styles.card, 
-          isSelected && styles.selectedCard
-        ]} 
-        onPress={() => setSelectedLang(item.code)}
-      >
-        <View style={[styles.flagCircle, isSelected && styles.selectedFlagCircle]}>
-          <Text style={styles.flagEmoji}>{item.flag}</Text>
-        </View>
-        
-        <Text style={[styles.languageName, isSelected && styles.selectedText]}>
-          {item.name}
-        </Text>
-
-        {isSelected && (
-          <View style={styles.checkBadge}>
-            <Ionicons name="checkmark-circle" size={24} color="#5EE7DF" />
-          </View>
-        )}
-      </TouchableOpacity>
-    );
-  };
+const handleContinue = async () => {
+  try {
+    await AsyncStorage.setItem('primaryLanguage', selectedLang);
+    
+    // CRITICAL: Pass the primaryCode here!
+    navigation.navigate('SecondaryLanguage', { primaryCode: selectedLang }); 
+  } catch (e) { 
+    console.error(e); 
+  }
+};
 
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" />
+      
       <View style={styles.header}>
-        <View style={styles.stepIndicator}>
-          <View style={styles.stepActive} />
-          <View style={styles.stepInactive} />
-        </View>
-        <Text style={styles.title}>Language</Text>
-        <Text style={styles.subtitle}>Choose your primary language for real-time protection alerts.</Text>
+        <Text style={styles.title}>Select Language</Text>
+        <Text style={styles.subtitle}>Choose your primary language</Text>
+      </View>
+
+      <View style={styles.searchContainer}>
+        <Ionicons name="search" size={20} color="rgba(255,255,255,0.3)" style={styles.searchIcon} />
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Search languages..."
+          placeholderTextColor="rgba(255,255,255,0.3)"
+          value={search}
+          onChangeText={setSearch}
+        />
       </View>
 
       <FlatList
-        data={LANGUAGES}
-        renderItem={renderItem}
+        data={filteredLanguages}
+        renderItem={({ item, index }) => (
+          <LanguageRow 
+            item={item} 
+            index={index} 
+            isSelected={selectedLang === item.code} 
+            onPress={setSelectedLang} 
+          />
+        )}
         keyExtractor={item => item.id}
-        numColumns={2}
-        columnWrapperStyle={styles.row}
-        contentContainerStyle={styles.listPadding}
+        contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
       />
 
       <View style={styles.footer}>
-        <TouchableOpacity style={styles.button} onPress={handleContinue}>
-          <Text style={styles.buttonText}>Continue</Text>
-          <Ionicons name="chevron-forward" size={20} color="#0F1724" style={{marginLeft: 8}} />
+        <TouchableOpacity 
+          style={styles.button} 
+          onPress={handleContinue}
+          activeOpacity={0.8}
+        >
+          <Text style={styles.buttonText}>Continue →</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>
@@ -99,97 +131,60 @@ const PrimaryLanguageScreen = ({ navigation }) => {
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#0F1724', // Dark background
-  },
-  header: {
-    padding: 30,
-    paddingTop: 20,
-  },
-  stepIndicator: {
+  container: { flex: 1, backgroundColor: '#0F1724' },
+  header: { paddingHorizontal: 24, paddingTop: 20, marginBottom: 24 },
+  title: { fontSize: 32, fontWeight: '800', color: '#FFF' },
+  subtitle: { fontSize: 16, color: '#8A95A8', marginTop: 4 },
+  
+  searchContainer: {
     flexDirection: 'row',
-    marginBottom: 20,
-  },
-  stepActive: { width: 40, height: 4, backgroundColor: '#5EE7DF', borderRadius: 2, marginRight: 6 },
-  stepInactive: { width: 12, height: 4, backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: 2 },
-  title: {
-    fontSize: 32,
-    fontWeight: '800',
-    color: '#F4F7FB',
-  },
-  subtitle: {
-    fontSize: 15,
-    color: '#8A95A8',
-    marginTop: 8,
-    lineHeight: 22,
-  },
-  listPadding: {
-    paddingHorizontal: 20,
-    paddingBottom: 20,
-  },
-  row: {
-    justifyContent: 'space-between',
-  },
-  card: {
-    backgroundColor: '#1A2233', // Card color
-    width: COLUMN_WIDTH,
-    height: 150,
-    borderRadius: 20,
-    marginBottom: 20,
     alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    marginHorizontal: 24,
+    borderRadius: 14,
+    paddingHorizontal: 16,
+    height: 54,
     borderWidth: 1,
-    borderColor: 'rgba(80,95,120,0.2)',
+    borderColor: 'rgba(255,255,255,0.1)',
+    marginBottom: 20,
   },
-  selectedCard: {
-    borderColor: '#5EE7DF',
-    backgroundColor: 'rgba(94,231,223,0.05)',
-  },
-  flagCircle: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    backgroundColor: 'rgba(255,255,255,0.03)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  selectedFlagCircle: {
-    backgroundColor: 'rgba(94,231,223,0.1)',
-  },
-  flagEmoji: {
-    fontSize: 32,
-  },
-  languageName: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#F4F7FB',
-  },
-  selectedText: {
-    color: '#5EE7DF',
-  },
-  checkBadge: {
-    position: 'absolute',
-    top: 12,
-    right: 12,
-  },
-  footer: {
-    padding: 25,
-  },
-  button: {
-    backgroundColor: '#5EE7DF',
+  searchIcon: { marginRight: 10 },
+  searchInput: { flex: 1, color: '#FFF', fontSize: 16 },
+
+  listContent: { paddingHorizontal: 24 },
+  rowItem: {
     flexDirection: 'row',
-    height: 60,
-    borderRadius: 16,
     alignItems: 'center',
-    justifyContent: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 18,
   },
-  buttonText: {
-    color: '#0F1724',
-    fontSize: 18,
-    fontWeight: '700',
+  leftContent: { flexDirection: 'row', alignItems: 'center' },
+  flag: { fontSize: 24, marginRight: 16 },
+  languageText: { fontSize: 18, fontWeight: '600', color: '#8A95A8' },
+  selectedLanguageText: { color: '#FFF' },
+
+  radioOuter: {
+    width: 24, height: 24, borderRadius: 12,
+    borderWidth: 2, borderColor: 'rgba(255,255,255,0.2)',
+    justifyContent: 'center', alignItems: 'center',
   },
+  radioOuterSelected: { borderColor: '#5EE7DF', backgroundColor: '#5EE7DF' },
+  radioInner: {
+    width: 10, height: 10, borderRadius: 5,
+    backgroundColor: '#0F1724',
+  },
+  radioPlaceholder: { width: 10, height: 10 },
+  
+  separator: { height: 1, backgroundColor: 'rgba(255,255,255,0.05)' },
+
+  footer: { padding: 24, paddingBottom: 30 },
+  button: {
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    height: 64, borderRadius: 18,
+    alignItems: 'center', justifyContent: 'center',
+    borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)',
+  },
+  buttonText: { color: '#FFF', fontSize: 20, fontWeight: '700' },
 });
 
 export default PrimaryLanguageScreen;

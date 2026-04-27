@@ -1,17 +1,48 @@
-import React, { useEffect, useRef } from 'react';
-import { View, Text, Image, StyleSheet, Animated, StatusBar } from 'react-native';
+import React, { useEffect, useRef, useCallback } from 'react';
+import {
+  View, Text, Image, StyleSheet,
+  Animated, StatusBar,
+} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+// ─── constants ────────────────────────────────────────────────
+const ANIM_DURATION  = 1000;   // ms for fade + scale-in
+const MIN_SPLASH_MS = 2500;   // minimum visible time
+const STORAGE_KEY   = 'alreadyLaunched';
+
+// ─── component ────────────────────────────────────────────────
 const SplashScreen = ({ navigation }) => {
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-  const scaleAnim = useRef(new Animated.Value(0.7)).current; // Start smaller for a "zoom-in" effect
+  const fadeAnim  = useRef(new Animated.Value(0)).current;
+  const scaleAnim = useRef(new Animated.Value(0.7)).current;
+
+  // Resolve navigation target from storage
+  const getNextRoute = useCallback(async () => {
+    try {
+      const [launched, token] = await Promise.all([
+        AsyncStorage.getItem(STORAGE_KEY),
+        AsyncStorage.getItem('userToken'),
+      ]);
+
+      // Mark app as launched for future sessions
+      if (launched === null) {
+        await AsyncStorage.setItem(STORAGE_KEY, 'true'); // ← was missing!
+        return 'Onboarding';
+      }
+      return token ? 'MainTabs' : 'Login';
+    } catch {
+      return 'Onboarding'; // safe fallback
+    }
+  }, []);
 
   useEffect(() => {
-    // Smooth entry animation
-    Animated.parallel([
+    let isMounted = true;  // ← unmount guard
+    let timer;
+
+    // 1. Start animation
+    const animation = Animated.parallel([
       Animated.timing(fadeAnim, {
         toValue: 1,
-        duration: 1000,
+        duration: ANIM_DURATION,
         useNativeDriver: true,
       }),
       Animated.spring(scaleAnim, {
@@ -20,50 +51,57 @@ const SplashScreen = ({ navigation }) => {
         tension: 40,
         useNativeDriver: true,
       }),
-    ]).start();
+    ]);
 
- const checkStatus = async () => {
-  try {
-    const isFirstTime = await AsyncStorage.getItem('alreadyLaunched');
-    const userToken = await AsyncStorage.getItem('userToken');
+    // 2. Resolve storage + respect minimum display time in parallel
+    const init = async () => {
+      const [route] = await Promise.all([
+        getNextRoute(),
+        new Promise(res =>
+          (timer = setTimeout(res, MIN_SPLASH_MS))
+        ),
+      ]);
 
-    setTimeout(() => {
-      // If null, it means the app was just installed or uninstalled/reinstalled
-      if (isFirstTime === null) {
-        navigation.replace('Onboarding'); // <--- Make sure this points to Onboarding!
-      } else if (userToken) {
-        navigation.replace('MainTabs'); 
-      } else {
-        navigation.replace('Login');
-      }
-    }, 3000);
-  } catch (e) {
-    navigation.replace('Onboarding'); // Default to onboarding on error
-  }
-};
+      if (!isMounted) return; // ← guard fires here
+      navigation.replace(route);
+    };
 
-    checkStatus();
-  }, []);
+    animation.start();
+    init();
+
+    return () => {        // ← cleanup on unmount
+      isMounted = false;
+      clearTimeout(timer);
+      animation.stop();
+    };
+  }, [navigation, getNextRoute, fadeAnim, scaleAnim]);
 
   return (
     <View style={styles.container}>
-      {/* Dark background status bar */}
-      <StatusBar backgroundColor="#0F1724" barStyle="light-content" />
-      
-      <Animated.View style={[
-        styles.brandContainer, 
-        { opacity: fadeAnim, transform: [{ scale: scaleAnim }] }
-      ]}>
-        <Image 
-          // Ensure your image in assets is the transparent one I provided
-          source={require('../assets/logo1.png')} 
-          style={styles.logo} 
+      <StatusBar
+        backgroundColor="#0F1724"
+        barStyle="light-content"
+        translucent={false}
+      />
+
+      <Animated.View
+        style={[
+          styles.brandContainer,
+          { opacity: fadeAnim, transform: [{ scale: scaleAnim }] },
+        ]}
+      >
+        <Image
+          source={require('../assets/logonew.png')}
+          style={styles.logo}
           resizeMode="contain"
+          accessibilityLabel="CallGuard logo" // ← a11y
         />
-        <Text style={styles.title}>CALLER<Text style={styles.titleBold}>ID</Text></Text>
+        <Text style={styles.title}>
+          CALLER<Text style={styles.titleBold}>ID</Text>
+        </Text>
         <View style={styles.underline} />
       </Animated.View>
-      
+
       <View style={styles.footer}>
         <Text style={styles.tagline}>Secure · Identify · Block</Text>
         <View style={styles.versionBadge}>
@@ -77,19 +115,12 @@ const SplashScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0F1724', // Changed to match your app theme
+    backgroundColor: '#0F1724',
     justifyContent: 'center',
     alignItems: 'center',
   },
-  brandContainer: {
-    alignItems: 'center',
-  },
-  logo: {
-    width: 200, // Increased size for impact
-    height: 200,
-    marginBottom: 20,
-    // If your image has glow, removing borderRadius is better
-  },
+  brandContainer: { alignItems: 'center' },
+  logo: { width: 200, height: 200, marginBottom: 20 },
   title: {
     fontSize: 28,
     fontWeight: '300',
@@ -97,16 +128,11 @@ const styles = StyleSheet.create({
     letterSpacing: 8,
     textTransform: 'uppercase',
   },
-  titleBold: {
-    fontWeight: '900',
-    color: '#5EE7DF', // Teal color from your theme
-  },
+  titleBold: { fontWeight: '900', color: '#5EE7DF' },
   underline: {
-    width: 40,
-    height: 3,
+    width: 40, height: 3,
     backgroundColor: '#5EE7DF',
-    marginTop: 10,
-    borderRadius: 2,
+    marginTop: 10, borderRadius: 2,
   },
   footer: {
     position: 'absolute',
@@ -114,7 +140,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   tagline: {
-    color: '#8A95A8', // Muted color
+    color: '#8A95A8',
     fontSize: 13,
     fontWeight: '500',
     marginBottom: 12,
@@ -127,11 +153,7 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     borderRadius: 12,
   },
-  versionText: {
-    color: '#5EE7DF',
-    fontSize: 10,
-    fontWeight: 'bold',
-  }
+  versionText: { color: '#5EE7DF', fontSize: 10, fontWeight: 'bold' },
 });
 
 export default SplashScreen;

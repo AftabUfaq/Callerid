@@ -11,6 +11,7 @@ import LoginScreen from './src/screens/LoginScreen';
 import PermissionsScreen from './src/screens/PermissionsScreen';
 import ProfileScreen from './src/screens/ProfileScreen';
 import SettingsScreen from './src/screens/SettingsScreen'
+import ContactDetailScreen from './src/screens/ContactDetailScreen'
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import TabNavigator from './src/navigation/TabNavigator';
 
@@ -19,28 +20,30 @@ const Stack = createStackNavigator();
 export default function App() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-    <NavigationContainer>
-      <Stack.Navigator 
-        initialRouteName="Splash"
-        screenOptions={{ headerShown: false }}
-      >
-        <Stack.Screen name="Splash" component={SplashScreen} />
-        <Stack.Screen name="PrimaryLanguage" component={PrimaryLanguageScreen} />
-        <Stack.Screen name="SecondaryLanguage" component={SecondaryLanguageScreen} />
-        <Stack.Screen name="Onboarding" component={OnboardingScreen} />
-        <Stack.Screen name="Login" component={LoginScreen} />
-        <Stack.Screen name="Permissions" component={PermissionsScreen} />
-        <Stack.Screen name='Settings' component={SettingsScreen} />
-        
-        {/* Main App Screens */}
-        <Stack.Screen name="MainApp" component={ProfileScreen} /> 
-        <Stack.Screen 
-          name="MainTabs" 
-          component={TabNavigator} 
-          options={{ headerShown: false }} 
-        />
-      </Stack.Navigator>
-    </NavigationContainer>
+      <NavigationContainer>
+        <Stack.Navigator 
+          initialRouteName="Splash"
+          screenOptions={{ headerShown: false }}
+        >
+          {/* 1. Startup & Setup Group */}
+          <Stack.Screen name="Splash" component={SplashScreen} />
+          <Stack.Screen name="PrimaryLanguage" component={PrimaryLanguageScreen} />
+          <Stack.Screen name="SecondaryLanguage" component={SecondaryLanguageScreen} />
+          <Stack.Screen name="Onboarding" component={OnboardingScreen} />
+          
+          {/* 2. Authentication & Permissions */}
+          <Stack.Screen name="Login" component={LoginScreen} />
+          <Stack.Screen name="Permissions" component={PermissionsScreen} />
+          <Stack.Screen name="ContactDetails" component={ContactDetailScreen} />
+          
+          {/* 3. Main Application Entry */}
+          <Stack.Screen name="MainTabs" component={TabNavigator} />
+          
+          {/* 4. Secondary Feature Screens (Pushed over Tabs) */}
+          <Stack.Screen name="Profile" component={ProfileScreen} /> 
+          <Stack.Screen name='Settings' component={SettingsScreen} />
+        </Stack.Navigator>
+      </NavigationContainer>
     </GestureHandlerRootView>
   );
 }
