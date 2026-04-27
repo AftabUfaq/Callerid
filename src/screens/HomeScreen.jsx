@@ -248,7 +248,11 @@ const HomeScreen = ({ navigation }) => {
 
 
   const handleCallPress = useCallback((item) => {
-    navigation.navigate('ContactDetails', { contact: item });
+    if (item.trust === 'spam') {
+      navigation.navigate('spamalert', { contact: item });
+      return;
+    }
+    navigation.navigate('incomingcall', { contact: item });
   }, [navigation]);
 
   const searchBarHeight = searchAnim.interpolate({
