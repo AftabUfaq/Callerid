@@ -1,12 +1,10 @@
 import React, { useEffect, useRef } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity,
-  StatusBar, Animated, Dimensions,
+  StatusBar, Animated,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { SafeAreaView } from 'react-native-safe-area-context';
-
-const { width, height } = Dimensions.get('window');
 
 // ─── trust config (mirrors existing TRUST_CONFIG) ────────────────
 const TRUST_CFG = {
@@ -41,6 +39,8 @@ const IncomingCallScreen = ({ route, navigation }) => {
     ).start();
     return () => pulseAnim.stop();
   }, [pulseAnim]);
+    const acceptScale  = useRef(new Animated.Value(1)).current;
+
 
   // Entrance animation
   const entranceAnim = useRef(new Animated.Value(0)).current;
@@ -50,10 +50,9 @@ const IncomingCallScreen = ({ route, navigation }) => {
 
   const handleAccept = () => {
     Animated.sequence([
-      Animated.timing(new Animated.Value(1), { toValue: 0.88, duration: 80, useNativeDriver: true }),
-      Animated.timing(new Animated.Value(1), { toValue: 1,    duration: 80, useNativeDriver: true }),
-    ]).start();
-    navigation?.replace('activecall', { contact });
+      Animated.timing(acceptScale, { toValue: 0.88, duration: 80, useNativeDriver: true }),
+      Animated.timing(acceptScale, { toValue: 1,    duration: 80, useNativeDriver: true }),
+    ]).start(() => navigation?.replace('activecall', { contact }));
   };
 
   const handleDecline = () => {
@@ -78,28 +77,29 @@ const IncomingCallScreen = ({ route, navigation }) => {
 
       {/* Caller info */}
       <View style={styles.callerSection}>
-        {/* Pulsing avatar ring */}
-        <Animated.View
-          style={[
-            styles.pulseRing,
-            { borderColor: contact.avatarColor, transform: [{ scale: pulseAnim }] },
-          ]}
-        />
-        <Animated.View
-          style={[
-            styles.pulseRing,
-            styles.pulseRingInner,
-            { borderColor: contact.avatarColor, transform: [{ scale: pulseAnim }] },
-          ]}
-        />
-
-        <View style={[
-          styles.avatar,
-          { backgroundColor: contact.avatarColor + '28', borderColor: contact.avatarColor + '80' },
-        ]}>
-          <Text style={[styles.avatarText, { color: contact.avatarColor }]}>
-            {contact.initials}
-          </Text>
+        {/* Avatar with pulse rings anchored around it */}
+        <View style={styles.avatarContainer}>
+          <Animated.View
+            style={[
+              styles.pulseRing,
+              { borderColor: contact.avatarColor, transform: [{ scale: pulseAnim }] },
+            ]}
+          />
+          <Animated.View
+            style={[
+              styles.pulseRing,
+              styles.pulseRingInner,
+              { borderColor: contact.avatarColor, transform: [{ scale: pulseAnim }] },
+            ]}
+          />
+          <View style={[
+            styles.avatar,
+            { backgroundColor: contact.avatarColor + '28', borderColor: contact.avatarColor + '80' },
+          ]}>
+            <Text style={[styles.avatarText, { color: contact.avatarColor }]}>
+              {contact.initials}
+            </Text>
+          </View>
         </View>
 
         <Text style={styles.callerName}>{contact.name}</Text>
@@ -158,6 +158,12 @@ const styles = StyleSheet.create({
 
   callerSection: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 24 },
 
+  avatarContainer: {
+    width: 200, height: 200,
+    alignItems: 'center', justifyContent: 'center',
+    marginBottom: 20,
+  },
+
   pulseRing: {
     position: 'absolute',
     width: 200, height: 200, borderRadius: 100,
@@ -171,7 +177,6 @@ const styles = StyleSheet.create({
   avatar: {
     width: 100, height: 100, borderRadius: 50,
     borderWidth: 2.5, alignItems: 'center', justifyContent: 'center',
-    marginBottom: 20,
   },
   avatarText: { fontSize: 34, fontWeight: '800' },
   callerName:  { fontSize: 30, fontWeight: '800', color: '#F1F5F9', marginBottom: 6 },

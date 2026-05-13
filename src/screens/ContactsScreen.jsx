@@ -26,7 +26,9 @@ const ContactsScreen = () => {
     <View style={styles.contactItem}>
       <View style={styles.leftContent}>
         <View style={styles.avatar}>
-          <Text style={styles.avatarText}>{item.givenName?.[0] || '?'}</Text>
+          <Text style={styles.avatarText}>
+            {((item.givenName?.[0] ?? '') + (item.familyName?.[0] ?? '')).toUpperCase() || '?'}
+          </Text>
         </View>
         <View>
           <Text style={styles.name}>{item.displayName}</Text>
@@ -65,6 +67,7 @@ const ContactsScreen = () => {
           renderItem={renderItem}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refresh} tintColor="#5EE7DF" />}
           ListEmptyComponent={<Text style={styles.empty}>No contacts found</Text>}
+          ItemSeparatorComponent={() => <View style={styles.separator} />}
         />
       )}
     </View>
@@ -76,7 +79,8 @@ const styles = StyleSheet.create({
   searchContainer: { padding: 10, backgroundColor: '#1A2233' },
   searchBar: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#0F1724', borderRadius: 10, paddingHorizontal: 12 },
   input: { flex: 1, height: 45, color: '#F4F7FB', marginLeft: 10 },
-  contactItem: { flexDirection: 'row', padding: 15, alignItems: 'center', borderBottomWidth: 1, borderBottomColor: 'rgba(80,95,120,0.1)' },
+  contactItem: { flexDirection: 'row', padding: 15, alignItems: 'center' },
+  separator: { height: 1, backgroundColor: 'rgba(80,95,120,0.1)', marginHorizontal: 15 },
   leftContent: { flexDirection: 'row', alignItems: 'center', flex: 1 },
   avatar: { width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(94,231,223,0.1)', justifyContent: 'center', alignItems: 'center', marginRight: 15 },
   avatarText: { color: '#5EE7DF', fontWeight: 'bold', fontSize: 18 },

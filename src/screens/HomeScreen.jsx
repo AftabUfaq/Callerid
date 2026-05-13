@@ -432,20 +432,6 @@ const styles = StyleSheet.create({
   emptyIcon:     { fontSize: 40, marginBottom: 12 },
   emptyText:     { fontSize: 15, color: '#4A5568' },
 
-  // bottom nav
-  bottomNav:     {
-    flexDirection: 'row', borderTopWidth: 1,
-    borderTopColor: 'rgba(255,255,255,0.07)',
-    backgroundColor: '#0A0F1E', paddingBottom: 8, paddingTop: 6,
-  },
-  navItem:       { flex: 1, alignItems: 'center', gap: 3 },
-  navIconWrap:   {
-    width: 36, height: 26, borderRadius: 13,
-    alignItems: 'center', justifyContent: 'center',
-  },
-  navIconActive: { backgroundColor: 'rgba(0,122,255,0.15)' },
-  navIcon:       { fontSize: 18, color: '#2D3748' },
-  navLabel:      { fontSize: 10, color: '#2D3748', fontWeight: '500' },
 });
 
 export default HomeScreen;
